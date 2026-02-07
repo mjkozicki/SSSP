@@ -26,8 +26,8 @@ Optionally build all benchmark Docker images so you can run the full benchmark w
 
 Then:
 
-- **Run the benchmark:** `python benchmark/run_benchmarks.py` (add `--build` if you didn’t use `--build-docker`)
-- **Start the web UI:** `python web/app.py` — open the URL printed in the console to run the test suite and view history/charts
+- **Run the benchmark:** `python benchmark/run_benchmarks.py` (add `--build` if you didn’t use `--build-docker`). Use `--algorithm dijkstra` or `--min-seconds 10` for algorithm choice or timed runs (see [Benchmark and Web UI](#benchmark-and-web-ui)).
+- **Start the web UI:** `python web/app.py` — open the URL printed in the console to choose algorithm and optional timed run, start the test suite, and view history/charts.
 - **Run tests per language:** see [Language-specific details](#language-specific-details) below (e.g. `cd csharp && dotnet test`, `cd rust && cargo test`)
 
 ---
@@ -72,8 +72,9 @@ Each language folder contains:
 
 - A **directed graph** type (vertices 0..*n*−1, non-negative weights).
 - An **SSSP result** type (distances and predecessors).
+- **Dijkstra’s algorithm** — O((*V*+*E*) log *V*) reference implementation (min-priority queue).
 - The **Duan–Mao–Shu–Yin** implementation (Solve entry point, BMSSP, BaseCase, FindPivots, FrontierDS, MinHeap).
-- Tests or a small runner that compare distances to a reference Dijkstra where applicable.
+- Tests or a small runner that compare distances to Dijkstra where applicable.
 
 ---
 
@@ -82,8 +83,8 @@ Each language folder contains:
 ### C# (`csharp/`)
 
 - **Target:** .NET 8.0  
-- **Files:** `Graph.cs`, `SSSPResult.cs`, `DuanMaoShuYinSSSP.cs`, `SSSP.Tests/DuanMaoShuYinSSSPTests.cs`  
-- **API:** `SSSP.DuanMaoShuYinSSSP.Solve(Graph g, int source)` → `SSSPResult` (Distance, Predecessor arrays).  
+- **Files:** `Graph.cs`, `SSSPResult.cs`, `DuanMaoShuYinSSSP.cs`, `Dijkstra.cs`, `SSSP.Tests/DuanMaoShuYinSSSPTests.cs`  
+- **API:** `DuanMaoShuYinSSSP.Solve(g, source)` and `Dijkstra.Solve(g, source)` → `SSSPResult` (Distance, Predecessor arrays).  
 - **Build & test:**
   ```bash
   cd csharp
@@ -96,7 +97,7 @@ Each language folder contains:
 ### Rust (`rust/`)
 
 - **Files:** `src/graph.rs`, `src/sssp.rs`, `src/lib.rs`  
-- **API:** `sssp::duan_mao_shu_yin(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `Option<usize>`.  
+- **API:** `sssp::duan_mao_shu_yin(g, source)` and `sssp::dijkstra(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `Option<usize>`.  
 - **Build & test:**
   ```bash
   cd rust
@@ -110,7 +111,7 @@ Each language folder contains:
 
 - **Standard:** C++17  
 - **Files:** `graph.hpp`/`graph.cpp`, `sssp.hpp`/`sssp.cpp`, `test_main.cpp`, `CMakeLists.txt`  
-- **API:** `sssp::duan_mao_shu_yin(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `std::optional<size_t>`.  
+- **API:** `sssp::duan_mao_shu_yin(g, source)` and `sssp::dijkstra(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `std::optional<size_t>`.  
 - **Build & test:**
   ```bash
   cd cplusplus
@@ -125,7 +126,7 @@ Each language folder contains:
 ### Go (`go/`)
 
 - **Files:** `graph.go`, `sssp.go`, `sssp_test.go`  
-- **API:** `sssp.DuanMaoShuYin(g, source)` → `*SsspResult` with `Distance []float64`, `Predecessor []int` (−1 for source/unreachable).  
+- **API:** `sssp.DuanMaoShuYin(g, source)` and `sssp.Dijkstra(g, source)` → `*SsspResult` with `Distance []float64`, `Predecessor []int` (−1 for source/unreachable).  
 - **Test:**
   ```bash
   cd go
@@ -137,7 +138,7 @@ Each language folder contains:
 ### Java (`java/`)
 
 - **Files:** `Graph.java`, `SsspResult.java`, `DuanMaoShuYinSSSP.java`, `Main.java`, `Benchmark.java` (benchmark entrypoint).  
-- **API:** `DuanMaoShuYinSSSP.solve(Graph g, int source)` → `SsspResult` with `getDistance()`, `getPredecessor()` (Integer; null for source/unreachable).  
+- **API:** `DuanMaoShuYinSSSP.solve(g, source)` and `Dijkstra.solve(g, source)` → `SsspResult` with `getDistance()`, `getPredecessor()` (Integer; null for source/unreachable).  
 - **Build & run:**
   ```bash
   cd java
@@ -151,7 +152,7 @@ Each language folder contains:
 ### PHP (`php/`)
 
 - **File:** `sssp.php` (Graph, SsspResult, algorithm, FrontierDS, MinHeap in one file).  
-- **API:** `duan_mao_shu_yin(Graph $g, int $source)` → `SsspResult` with `$result->distance`, `$result->predecessor` (null for source/unreachable).  
+- **API:** `duan_mao_shu_yin($g, $source)` and `dijkstra($g, $source)` → `SsspResult` with `$result->distance`, `$result->predecessor` (null for source/unreachable).  
 - **Run:** Include the file and call the function; no separate test runner in repo.
 
 ---
@@ -159,7 +160,7 @@ Each language folder contains:
 ### Python (`python/`)
 
 - **Files:** `graph.py`, `sssp.py`, `test_sssp.py`  
-- **API:** `duan_mao_shu_yin(g, source)` → `SsspResult(distance, predecessor)`; `predecessor[v]` is `int | None`.  
+- **API:** `duan_mao_shu_yin(g, source)` and `dijkstra(g, source)` → `SsspResult(distance, predecessor)`; `predecessor[v]` is `int | None`.  
 - **Test:**
   ```bash
   cd python
@@ -171,7 +172,7 @@ Each language folder contains:
 ### TypeScript (`typescript/`)
 
 - **Files:** `src/graph.ts`, `src/sssp.ts`, `src/index.ts`, `test/sssp.test.js`  
-- **API:** `duanMaoShuYin(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `number | null`.  
+- **API:** `duanMaoShuYin(g, source)` and `dijkstra(g, source)` → `SsspResult { distance, predecessor }`; `predecessor[v]` is `number | null`.  
 - **Build & test:**
   ```bash
   cd typescript
@@ -209,5 +210,9 @@ Typical usage:
 
 ## Benchmark and Web UI
 
-- **Benchmark:** From repo root, run `python benchmark/run_benchmarks.py [--build]` to run all language implementations in Docker and record wall time, peak memory, and CPU. Results are stored in `benchmark/data/benchmark.db` (SQLite) and optionally `benchmark/results.json`. See **benchmark/README.md** for dataset, images, and results format.
-- **Web UI:** Run `python web/app.py` from repo root, then open the URL printed in the console. Use the UI to start the test suite (with optional image build), watch per-language progress, view historical runs, and inspect charts and results. See **web/README.md** for setup and features.
+- **Benchmark:** From repo root, run `python benchmark/run_benchmarks.py [--build]` to run all language implementations in Docker and record wall time, peak memory, and CPU. Options:
+  - **`--algorithm {dijkstra|duan_mao_shu_yin}`** — which SSSP algorithm to run (default: `duan_mao_shu_yin`).
+  - **`--min-seconds SEC`** — run repeated iterations until at least *SEC* seconds have elapsed (e.g. `--min-seconds 10` for a 10-second timed run); default is a single run per language.
+  - **`--lang <lang>`** — run only one language; **`--timeout N`** — timeout per run in seconds.
+  Results are stored in `benchmark/data/benchmark.db` (SQLite) and optionally `benchmark/results.json`. See **benchmark/README.md** for dataset, images, and results format.
+- **Web UI:** Run `python web/app.py` from repo root, then open the URL printed in the console. Use the UI to choose **algorithm** (Duan–Mao–Shu–Yin or Dijkstra), optionally enable **Timed run (≥10 s)** to run iterations for at least 10 seconds per language, start the test suite (with optional image build), watch per-language progress, view historical runs (including algorithm per session), and inspect charts and results. See **web/README.md** for setup and features.

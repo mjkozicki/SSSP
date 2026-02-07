@@ -1,6 +1,6 @@
 # SSSP Benchmark
 
-Benchmark harness that runs the Duan–Mao–Shu–Yin SSSP implementation in each language inside Docker and collects:
+Benchmark harness that runs an SSSP implementation (Duan–Mao–Shu–Yin or Dijkstra) in each language inside Docker and collects:
 
 - **Overall user runtime** — wall clock time (seconds)
 - **Peak memory allocation** — maximum RSS (MiB) during the run
@@ -48,9 +48,27 @@ python benchmark/run_benchmarks.py --build --output benchmark/results.json
 # Without rebuilding images (use existing sssp-bench-* images)
 python benchmark/run_benchmarks.py --output benchmark/results.json
 
+# Choose algorithm: Dijkstra or Duan–Mao–Shu–Yin (default)
+python benchmark/run_benchmarks.py --algorithm dijkstra --output benchmark/results.json
+
+# Timed run: repeat SSSP iterations for at least 10 seconds per language (for stable timing)
+python benchmark/run_benchmarks.py --min-seconds 10 --output benchmark/results.json
+
 # Run only one language
 python benchmark/run_benchmarks.py --lang rust --output benchmark/results.json
 ```
+
+**CLI options:**
+
+| Option | Description |
+|--------|-------------|
+| `--build` | Build all benchmark Docker images before running. |
+| `--algorithm {dijkstra\|duan_mao_shu_yin}` | SSSP algorithm to run (default: `duan_mao_shu_yin`). |
+| `--min-seconds SEC` | Run repeated iterations until at least *SEC* seconds have elapsed per language (default: 0 = single run). |
+| `--lang <lang>` | Run only this language (e.g. `rust`, `python`). |
+| `--timeout N` | Timeout per run in seconds (default: 600). |
+| `--output FILE` | Write JSON results to *FILE* (default: `benchmark/results.json`). Use `--no-json` to skip. |
+| `--progress-url URL` | Base URL for progress POSTs (used when started from the web UI). |
 
 **Requirements:** Docker, Python 3. The harness will:
 
@@ -63,11 +81,19 @@ python benchmark/run_benchmarks.py --lang rust --output benchmark/results.json
    - `total_cpu_sec` — integrated CPU time (seconds)
    - `cpu_utilization` — list of `{elapsed_sec, cpu_pct, mem_mb}` for plotting
 
+## Container environment
+
+Each benchmark container receives:
+
+- **`GRAPH_FILE`** — path to the graph file (e.g. `/data/graph.txt`).
+- **`SSSP_ALGORITHM`** — `dijkstra` or `duan_mao_shu_yin` (which SSSP to run).
+- **`SSSP_MIN_SECONDS`** — when set to a positive number, the runner repeats SSSP(0) until wall-clock time ≥ that many seconds, then prints `DONE n reachable iterations`; otherwise it runs once and prints `DONE n reachable`.
+
 ## SQLite results
 
 The harness writes every run into **benchmark/data/benchmark.db**:
 
-- **sessions** — one row per full benchmark run (timestamp, list of languages).
+- **sessions** — one row per full benchmark run: `created_at`, `languages`, `algorithm` (e.g. `dijkstra` or `duan_mao_shu_yin`).
 - **runs** — one row per language: `session_id`, `language`, `wall_sec`, `peak_mem_mb`, `total_cpu_sec`, `error` (if any).
 - **utilization** — time series per run: `run_id`, `elapsed_sec`, `cpu_pct`, `mem_mb`.
 
@@ -102,7 +128,7 @@ Example `results.json`:
 
 ## Runners and Dockerfiles
 
-- **Runners:** Each implementation has a benchmark entrypoint that reads the graph file (from `GRAPH_FILE` or argv), runs SSSP(0), and prints `DONE n reachable`.
+- **Runners:** Each implementation has a benchmark entrypoint that reads the graph file (from `GRAPH_FILE` or argv), selects the algorithm from `SSSP_ALGORITHM` (default: Duan–Mao–Shu–Yin), runs SSSP(0) once or in a timed loop when `SSSP_MIN_SECONDS` is set, and prints `DONE n reachable` or `DONE n reachable iterations`.
 - **Dockerfiles:** `benchmark/docker/Dockerfile.<lang>` build a minimal image that runs that entrypoint; they expect the graph at `/data/graph.txt` (volume mount).
 
 | Language   | Runner / entrypoint                          |

@@ -4,8 +4,11 @@ Web interface to run the benchmark test suite, view historical runs, chart metri
 
 ## Features
 
-- **Run test suite** — Start the full benchmark (all languages) from the browser, with optional Docker image build. The UI uses **WebSocket** to show live progress: first “Building images” (per-language build status), then “Running tests” (per-language run status and metrics).
-- **Historical test suite runs** — Table of past sessions (session id, date, languages, run count) with “View results” to load that session’s runs into the results table.
+- **Run test suite** — Start the full benchmark (all languages) from the browser, with optional Docker image build. Before running you can choose:
+  - **Algorithm** — Duan–Mao–Shu–Yin or Dijkstra (passed to the harness as `--algorithm`).
+  - **Timed run (≥10 s)** — When enabled, each language runs repeated SSSP iterations for at least 10 seconds (passed as `--min-seconds 10`) for more stable timing.
+  The UI uses **WebSocket** to show live progress: first “Building images” (per-language build status), then “Running tests” (per-language run status and metrics).
+- **Historical test suite runs** — Table of past sessions (session id, date, **algorithm**, languages, run count) with “View results” to load that session’s runs into the results table.
 - **Metrics over time** — Three line charts: wall time (s), peak memory (MiB), and total CPU (s) by session, with one series per language.
 - **Test suite results** — Session selector and table of runs: language, wall_sec, peak_mem_mb, total_cpu_sec, error.
 
@@ -27,4 +30,4 @@ python web/app.py
 
 The app binds to an available port and prints the URL (e.g. `Web UI available at http://localhost:54321`). Open that URL in your browser.
 
-The app reads and writes the same SQLite database used by `benchmark/run_benchmarks.py`. Any run you start from the UI runs the harness with `--build` and `PROGRESS_URL` set so the UI receives live build and run progress over WebSocket; when the run finishes, history and charts refresh automatically.
+The app reads and writes the same SQLite database used by `benchmark/run_benchmarks.py`. Any run you start from the UI runs the harness with `--build`, the selected **algorithm** (`--algorithm dijkstra` or `--algorithm duan_mao_shu_yin`), optional **`--min-seconds 10`** when “Timed run (≥10 s)” is checked, and `PROGRESS_URL` set so the UI receives live build and run progress over WebSocket; when the run finishes, history and charts refresh automatically.
