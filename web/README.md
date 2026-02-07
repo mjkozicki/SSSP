@@ -25,6 +25,6 @@ pip install -r web/requirements.txt
 python web/app.py
 ```
 
-Then open http://localhost:5000 .
+Then open http://localhost:{port}. (shown in console when run)
 
 The app reads and writes the same SQLite database used by `benchmark/run_benchmarks.py`, so any run you start from the UI will appear in the history and charts after it completes.

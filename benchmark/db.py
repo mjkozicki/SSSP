@@ -6,6 +6,7 @@ Schema: sessions (each full benchmark run), runs (per-language), utilization (ti
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DB_PATH = DATA_DIR / "benchmark.db"
@@ -77,10 +78,10 @@ def insert_session(languages: list[str]) -> int:
 def insert_run(
     session_id: int,
     language: str,
-    wall_sec: float | None,
-    peak_mem_mb: float | None,
-    total_cpu_sec: float | None,
-    error: str | None,
+    wall_sec: Optional[float],
+    peak_mem_mb: Optional[float],
+    total_cpu_sec: Optional[float],
+    error: Optional[str],
     utilization: list[dict],
 ) -> int:
     """Insert a run and its utilization samples; returns run_id."""
