@@ -10,7 +10,21 @@ Web interface to run the benchmark test suite, view historical runs, chart metri
   The UI uses **WebSocket** to show live progress: first “Building images” (per-language build status), then “Running tests” (per-language run status and metrics).
 - **Historical test suite runs** — Table of past sessions (session id, date, **algorithm**, languages, run count) with “View results” to load that session’s runs into the results table.
 - **Metrics over time** — Three line charts: wall time (s), peak memory (MiB), and total CPU (s) by session, with one series per language.
-- **Test suite results** — Session selector and table of runs: language, wall_sec, peak_mem_mb, total_cpu_sec, error.
+- **Test suite results** — Session selector and table of runs: language, wall_sec, peak_mem_mb, total_cpu_sec, **runs** (iteration count for timed runs), error.
+
+## Metrics explained
+
+The UI and charts show the same metrics the harness collects from each Docker run (via `docker stats` and wall-clock timing):
+
+| Metric | Meaning |
+|--------|--------|
+| **Wall time (s)** | Total **elapsed (wall-clock) time** for that language’s benchmark run. From container start until the process exits. Lower is better. |
+| **Peak memory (MiB)** | **Maximum memory** (RSS) used by the container during the run, in **mebibytes** (MiB). Sampled periodically; the peak over the run is stored. Lower is better for memory use. |
+| **Total CPU (s)** | **Integrated CPU time** over the run: the harness samples the container’s CPU% at an interval (e.g. 0.5 s), then approximates total CPU seconds as the area under that curve. Can exceed wall time on multi-core systems (e.g. 200% CPU → 2 s CPU per 1 s wall). Indicates how much CPU work the run used. |
+| **Runs** | For **timed runs** (when "Timed run (≥10 s)" was enabled), the number of SSSP iterations completed in that run. Shown as "—" for single-run (non-timed) sessions. |
+| **Error** | If the run failed (non-zero exit, timeout, or crash), the error message or exit details are shown here; successful runs show “—”. |
+
+Charts plot these metrics **by session** (one point per language per session), so you can compare languages and see how metrics change across runs (e.g. after code changes or with “Timed run” enabled).
 
 ## Requirements
 

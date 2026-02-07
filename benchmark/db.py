@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS runs (
     peak_mem_mb REAL,
     total_cpu_sec REAL,
     error TEXT,
+    iterations INTEGER,
     created_at TEXT NOT NULL,
     FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
@@ -65,6 +66,13 @@ def init_db():
         except sqlite3.OperationalError as e:
             if "duplicate column name" not in str(e).lower():
                 raise
+        # Migration: add iterations column to runs if missing (timed-run iteration count)
+        try:
+            conn.execute("ALTER TABLE runs ADD COLUMN iterations INTEGER")
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e).lower():
+                raise
     finally:
         conn.close()
 
@@ -93,13 +101,14 @@ def insert_run(
     total_cpu_sec: Optional[float],
     error: Optional[str],
     utilization: list[dict],
+    iterations: Optional[int] = None,
 ) -> int:
-    """Insert a run and its utilization samples; returns run_id."""
+    """Insert a run and its utilization samples; returns run_id. iterations is set for timed runs."""
     conn = get_connection()
     try:
         cur = conn.execute(
-            """INSERT INTO runs (session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO runs (session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, iterations, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 session_id,
                 language,
@@ -107,6 +116,7 @@ def insert_run(
                 peak_mem_mb,
                 total_cpu_sec,
                 error,
+                iterations,
                 datetime.now(timezone.utc).isoformat(),
             ),
         )

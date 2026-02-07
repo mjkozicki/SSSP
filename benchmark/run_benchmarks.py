@@ -171,7 +171,7 @@ def run_container_and_collect_stats(
     start_wall = time.perf_counter()
     out = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=30)
     if out.returncode != 0:
-        return None, [], None, None, out.stderr or "docker run failed"
+        return None, [], None, None, out.stderr or "docker run failed", None
     cid = out.stdout.strip()
     container_id[0] = cid
 
@@ -189,7 +189,7 @@ def run_container_and_collect_stats(
         subprocess.run(["docker", "kill", cid], capture_output=True)
         stats_stop.set()
         stats_thread.join()
-        return time.perf_counter() - start_wall, stats_samples, None, None, "timeout"
+        return time.perf_counter() - start_wall, stats_samples, None, None, "timeout", None
     stats_stop.set()
     stats_thread.join(timeout=2)
     wall_sec = time.perf_counter() - start_wall
@@ -201,7 +201,25 @@ def run_container_and_collect_stats(
             ["docker", "logs", cid],
             capture_output=True, text=True, cwd=REPO_ROOT,
         )
-        return wall_sec, stats_samples, None, None, f"exit {exit_code}: " + (logs.stderr or logs.stdout or "")
+        return wall_sec, stats_samples, None, None, f"exit {exit_code}: " + (logs.stderr or logs.stdout or ""), None
+
+    # Parse iterations from container stdout (timed run: "DONE n reachable iters")
+    iterations = None
+    logs_out = subprocess.run(
+        ["docker", "logs", cid],
+        capture_output=True, text=True, cwd=REPO_ROOT,
+    )
+    if logs_out.stdout:
+        for line in reversed(logs_out.stdout.strip().splitlines()):
+            line = line.strip()
+            if line.upper().startswith("DONE "):
+                parts = line.split()
+                if len(parts) >= 4:
+                    try:
+                        iterations = int(parts[3])
+                    except ValueError:
+                        pass
+                break
 
     peak_mem_mb = max((s["mem_mb"] for s in stats_samples), default=0)
     total_cpu_sec = 0.0
@@ -212,7 +230,7 @@ def run_container_and_collect_stats(
     if len(stats_samples) == 1:
         total_cpu_sec = (stats_samples[0]["cpu_pct"] / 100.0) * wall_sec
 
-    return wall_sec, stats_samples, peak_mem_mb, total_cpu_sec, None
+    return wall_sec, stats_samples, peak_mem_mb, total_cpu_sec, None, iterations
 
 
 def main():
@@ -247,13 +265,13 @@ def main():
         image = f"sssp-bench-{lang}"
         print(f"\n--- {lang} ---", flush=True)
         _post_progress(progress_url, {"event": "started", "language": lang})
-        wall, utilization, peak_mem, total_cpu, err = run_container_and_collect_stats(
+        wall, utilization, peak_mem, total_cpu, err, iterations = run_container_and_collect_stats(
             image, args.timeout, algorithm, min_seconds, max_seconds
         )
         if err:
             print(f"  Error: {err}", flush=True)
             results[lang] = {"error": err, "wall_sec": wall}
-            insert_run(session_id, lang, wall, None, None, err, utilization or [])
+            insert_run(session_id, lang, wall, None, None, err, utilization or [], None)
             _post_progress(progress_url, {
                 "event": "completed", "language": lang,
                 "wall_sec": wall, "peak_mem_mb": None, "total_cpu_sec": None, "error": err,
@@ -264,12 +282,16 @@ def main():
                 "peak_mem_mb": round(peak_mem, 2) if peak_mem is not None else None,
                 "total_cpu_sec": round(total_cpu, 3) if total_cpu is not None else None,
                 "cpu_utilization": utilization,
+                "iterations": iterations,
             }
-            insert_run(session_id, lang, wall, peak_mem, total_cpu, None, utilization or [])
-            print(f"  wall_sec={results[lang]['wall_sec']} peak_mem_mb={results[lang]['peak_mem_mb']} total_cpu_sec={results[lang]['total_cpu_sec']}", flush=True)
+            insert_run(session_id, lang, wall, peak_mem, total_cpu, None, utilization or [], iterations)
+            msg = f"  wall_sec={results[lang]['wall_sec']} peak_mem_mb={results[lang]['peak_mem_mb']} total_cpu_sec={results[lang]['total_cpu_sec']}"
+            if iterations is not None:
+                msg += f" iterations={iterations}"
+            print(msg, flush=True)
             _post_progress(progress_url, {
                 "event": "completed", "language": lang,
-                "wall_sec": wall, "peak_mem_mb": peak_mem, "total_cpu_sec": total_cpu, "error": None,
+                "wall_sec": wall, "peak_mem_mb": peak_mem, "total_cpu_sec": total_cpu, "error": None, "iterations": iterations,
             })
 
     _post_progress(progress_url, {"event": "suite_finished", "session_id": session_id})

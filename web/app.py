@@ -71,12 +71,20 @@ def _get_sessions(limit=None):
 def _get_session_runs(session_id):
     conn = get_connection()
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
-    cur = conn.execute(
-        """SELECT id, session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, created_at
-           FROM runs WHERE session_id = ? ORDER BY id""",
-        (session_id,),
-    )
-    rows = cur.fetchall()
+    try:
+        cur = conn.execute(
+            """SELECT id, session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, iterations, created_at
+               FROM runs WHERE session_id = ? ORDER BY id""",
+            (session_id,),
+        )
+        rows = cur.fetchall()
+    except Exception:
+        cur = conn.execute(
+            """SELECT id, session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, created_at
+               FROM runs WHERE session_id = ? ORDER BY id""",
+            (session_id,),
+        )
+        rows = [dict(r, iterations=None) for r in cur.fetchall()]
     conn.close()
     return rows
 

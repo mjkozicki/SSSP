@@ -198,19 +198,19 @@
 
   async function loadSessionRuns(sessionId) {
     if (!sessionId) {
-      runsBody.innerHTML = '<tr><td colspan="5" class="empty">Select a session</td></tr>';
+      runsBody.innerHTML = '<tr><td colspan="6" class="empty">Select a session</td></tr>';
       return;
     }
     let session;
     try {
       session = await api("/api/sessions/" + sessionId);
     } catch {
-      runsBody.innerHTML = '<tr><td colspan="5" class="empty">Failed to load session</td></tr>';
+      runsBody.innerHTML = '<tr><td colspan="6" class="empty">Failed to load session</td></tr>';
       return;
     }
     const runs = session.runs || [];
     if (!runs.length) {
-      runsBody.innerHTML = '<tr><td colspan="5" class="empty">No runs in this session</td></tr>';
+      runsBody.innerHTML = '<tr><td colspan="6" class="empty">No runs in this session</td></tr>';
       return;
     }
     runsBody.innerHTML = runs.map((r) => `
@@ -219,6 +219,7 @@
         <td class="num">${r.wall_sec != null ? Number(r.wall_sec).toFixed(3) : "—"}</td>
         <td class="num">${r.peak_mem_mb != null ? Number(r.peak_mem_mb).toFixed(2) : "—"}</td>
         <td class="num">${r.total_cpu_sec != null ? Number(r.total_cpu_sec).toFixed(3) : "—"}</td>
+        <td class="num">${r.iterations != null ? Number(r.iterations).toLocaleString() : "—"}</td>
         <td class="err" title="${escapeHtml(r.error || "")}">${r.error ? escapeHtml(r.error) : "—"}</td>
       </tr>
     `).join("");
