@@ -26,10 +26,11 @@ fclose($f);
 
 $algo = strtolower(trim((string) (getenv('SSSP_ALGORITHM') ?: 'duan_mao_shu_yin')));
 $minSec = (float) (getenv('SSSP_MIN_SECONDS') ?: 0);
+$maxSec = (float) (getenv('SSSP_MAX_SECONDS') ?: 30);
 if ($minSec > 0) {
     $start = microtime(true);
     $iters = 0;
-    while ((microtime(true) - $start) < $minSec) {
+    while ((microtime(true) - $start) < $minSec && (microtime(true) - $start) < $maxSec) {
         $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
         $iters++;
     }

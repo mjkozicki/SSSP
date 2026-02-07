@@ -11,12 +11,14 @@ var g = LoadGraph(path);
 var algo = (Environment.GetEnvironmentVariable("SSSP_ALGORITHM") ?? "duan_mao_shu_yin").Trim().ToLowerInvariant();
 var minSecRaw = Environment.GetEnvironmentVariable("SSSP_MIN_SECONDS");
 double minSec = double.TryParse(minSecRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var ms) ? ms : 0;
+var maxSecRaw = Environment.GetEnvironmentVariable("SSSP_MAX_SECONDS");
+double maxSec = double.TryParse(maxSecRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var mx) ? mx : 30;
 SSSPResult r;
 if (minSec > 0)
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
     int iters = 0;
-    while (sw.Elapsed.TotalSeconds < minSec)
+    while (sw.Elapsed.TotalSeconds < minSec && sw.Elapsed.TotalSeconds < maxSec)
     {
         r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
         iters++;

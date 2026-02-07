@@ -54,15 +54,22 @@ int main(int argc, char** argv) {
     min_sec = std::strtod(min_env, &end);
     if (end == min_env || min_sec < 0) min_sec = 0.0;
   }
+  double max_sec = 30.0;
+  if (const char* max_env = std::getenv("SSSP_MAX_SECONDS")) {
+    char* end = nullptr;
+    max_sec = std::strtod(max_env, &end);
+    if (end == max_env || max_sec < 0) max_sec = 30.0;
+  }
   size_t reachable = 0;
   if (min_sec > 0.0) {
     auto t0 = std::chrono::steady_clock::now();
     std::chrono::duration<double> min_dur(min_sec);
+    std::chrono::duration<double> max_dur(max_sec);
     size_t iters = 0;
     sssp::SsspResult r = str_eq_ignore_case(algo, "dijkstra")
         ? sssp::dijkstra(g, 0)
         : sssp::duan_mao_shu_yin(g, 0);
-    while (std::chrono::steady_clock::now() - t0 < min_dur) {
+    while (std::chrono::steady_clock::now() - t0 < min_dur && std::chrono::steady_clock::now() - t0 < max_dur) {
       r = str_eq_ignore_case(algo, "dijkstra")
           ? sssp::dijkstra(g, 0)
           : sssp::duan_mao_shu_yin(g, 0);

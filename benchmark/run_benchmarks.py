@@ -111,6 +111,7 @@ def run_container_and_collect_stats(
     timeout_sec: int = 600,
     algorithm: str = "duan_mao_shu_yin",
     min_seconds: float = 0,
+    max_seconds: float = 30,
 ):
     """Run container with -v data:/data (detached), collect stats, then wait. Return wall time and stats."""
     if algorithm not in ALGORITHMS:
@@ -164,7 +165,9 @@ def run_container_and_collect_stats(
         "/data/graph.txt",
     ]
     if min_seconds > 0:
-        cmd = cmd[:-2] + ["-e", f"SSSP_MIN_SECONDS={min_seconds}"] + cmd[-2:]
+        cmd = cmd[:-2] + ["-e", f"SSSP_MIN_SECONDS={min_seconds}", "-e", f"SSSP_MAX_SECONDS={max_seconds}"] + cmd[-2:]
+    else:
+        cmd = cmd[:-2] + ["-e", f"SSSP_MAX_SECONDS={max_seconds}"] + cmd[-2:]  # cap for any timed logic; default 30
     start_wall = time.perf_counter()
     out = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=30)
     if out.returncode != 0:
@@ -221,12 +224,14 @@ def main():
     ap.add_argument("--lang", choices=LANGUAGES, help="Run only this language")
     ap.add_argument("--algorithm", choices=ALGORITHMS, default="duan_mao_shu_yin", help="SSSP algorithm: dijkstra or duan_mao_shu_yin")
     ap.add_argument("--min-seconds", type=float, default=0, metavar="SEC", help="Run repeated iterations until at least SEC seconds elapsed (e.g. 10 for 10s timed run)")
+    ap.add_argument("--max-seconds", type=float, default=30, metavar="SEC", help="Cap timed runs at SEC seconds (default 30)")
     ap.add_argument("--progress-url", default=os.environ.get("PROGRESS_URL"), help="Web UI base URL for progress (e.g. http://127.0.0.1:5000)")
     args = ap.parse_args()
 
     progress_url = args.progress_url
     algorithm = args.algorithm
     min_seconds = max(0.0, args.min_seconds)
+    max_seconds = max(0.0, args.max_seconds)
     os.chdir(REPO_ROOT)
     ensure_dataset()
     init_db()
@@ -243,7 +248,7 @@ def main():
         print(f"\n--- {lang} ---", flush=True)
         _post_progress(progress_url, {"event": "started", "language": lang})
         wall, utilization, peak_mem, total_cpu, err = run_container_and_collect_stats(
-            image, args.timeout, algorithm, min_seconds
+            image, args.timeout, algorithm, min_seconds, max_seconds
         )
         if err:
             print(f"  Error: {err}", flush=True)

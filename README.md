@@ -213,6 +213,7 @@ Typical usage:
 - **Benchmark:** From repo root, run `python benchmark/run_benchmarks.py [--build]` to run all language implementations in Docker and record wall time, peak memory, and CPU. Options:
   - **`--algorithm {dijkstra|duan_mao_shu_yin}`** — which SSSP algorithm to run (default: `duan_mao_shu_yin`).
   - **`--min-seconds SEC`** — run repeated iterations until at least *SEC* seconds have elapsed (e.g. `--min-seconds 10` for a 10-second timed run); default is a single run per language.
+  - **`--max-seconds SEC`** — cap timed runs at *SEC* seconds (default 30).
   - **`--lang <lang>`** — run only one language; **`--timeout N`** — timeout per run in seconds.
   Results are stored in `benchmark/data/benchmark.db` (SQLite) and optionally `benchmark/results.json`. See **benchmark/README.md** for dataset, images, and results format.
 - **Web UI:** Run `python web/app.py` from repo root, then open the URL printed in the console. Use the UI to choose **algorithm** (Duan–Mao–Shu–Yin or Dijkstra), optionally enable **Timed run (≥10 s)** to run iterations for at least 10 seconds per language, start the test suite (with optional image build), watch per-language progress, view historical runs (including algorithm per session), and inspect charts and results. See **web/README.md** for setup and features.

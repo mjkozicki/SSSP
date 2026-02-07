@@ -22,15 +22,23 @@ public final class Benchmark {
                 minSec = Double.parseDouble(minSecEnv.trim());
             } catch (NumberFormatException ignored) {}
         }
+        double maxSec = 30.0;
+        String maxSecEnv = System.getenv("SSSP_MAX_SECONDS");
+        if (maxSecEnv != null && !maxSecEnv.isBlank()) {
+            try {
+                maxSec = Double.parseDouble(maxSecEnv.trim());
+            } catch (NumberFormatException ignored) {}
+        }
         SsspResult r;
         if (minSec > 0) {
             long startNanos = System.nanoTime();
             long minNanos = (long) (minSec * 1_000_000_000);
+            long maxNanos = (long) (maxSec * 1_000_000_000);
             int iters = 0;
             do {
                 r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
                 iters++;
-            } while (System.nanoTime() - startNanos < minNanos);
+            } while (System.nanoTime() - startNanos < minNanos && System.nanoTime() - startNanos < maxNanos);
             int reachable = 0;
             for (double d : r.getDistance())
                 if (Double.isFinite(d)) reachable++;

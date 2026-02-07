@@ -31,10 +31,13 @@ def main():
     g = load_graph(path)
     algo = os.environ.get("SSSP_ALGORITHM", "duan_mao_shu_yin").strip().lower()
     min_sec = float(os.environ.get("SSSP_MIN_SECONDS", "0") or "0")
+    max_sec = float(os.environ.get("SSSP_MAX_SECONDS", "30") or "30")
     if min_sec > 0:
         start = time.perf_counter()
         iters = 0
         while (time.perf_counter() - start) < min_sec:
+            if (time.perf_counter() - start) >= max_sec:
+                break
             if algo == "dijkstra":
                 r = dijkstra(g, 0)
             else:

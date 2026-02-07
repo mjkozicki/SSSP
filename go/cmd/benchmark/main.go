@@ -58,11 +58,17 @@ func main() {
 			minSec = f
 		}
 	}
+	maxSec := 30.0
+	if s := os.Getenv("SSSP_MAX_SECONDS"); s != "" {
+		if f, err := strconv.ParseFloat(strings.TrimSpace(s), 64); err == nil && f > 0 {
+			maxSec = f
+		}
+	}
 	var r *sssp.SsspResult
 	if minSec > 0 {
 		start := time.Now()
 		iters := 0
-		for time.Since(start).Seconds() < minSec {
+		for time.Since(start).Seconds() < minSec && time.Since(start).Seconds() < maxSec {
 			if algo == "dijkstra" {
 				r = sssp.Dijkstra(g, 0)
 			} else {

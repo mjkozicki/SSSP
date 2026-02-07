@@ -44,16 +44,21 @@ fn main() {
         .ok()
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(0.0);
+    let max_sec: f64 = env::var("SSSP_MAX_SECONDS")
+        .ok()
+        .and_then(|s| s.trim().parse().ok())
+        .unwrap_or(30.0);
     if min_sec > 0.0 {
         let start = Instant::now();
         let min_dur = std::time::Duration::from_secs_f64(min_sec);
+        let max_dur = std::time::Duration::from_secs_f64(max_sec);
         let mut iters = 0u64;
         let mut r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
             dijkstra(&g, 0)
         } else {
             duan_mao_shu_yin(&g, 0)
         };
-        while start.elapsed() < min_dur {
+        while start.elapsed() < min_dur && start.elapsed() < max_dur {
             r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
                 dijkstra(&g, 0)
             } else {

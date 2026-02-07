@@ -65,6 +65,7 @@ python benchmark/run_benchmarks.py --lang rust --output benchmark/results.json
 | `--build` | Build all benchmark Docker images before running. |
 | `--algorithm {dijkstra\|duan_mao_shu_yin}` | SSSP algorithm to run (default: `duan_mao_shu_yin`). |
 | `--min-seconds SEC` | Run repeated iterations until at least *SEC* seconds have elapsed per language (default: 0 = single run). |
+| `--max-seconds SEC` | Cap timed runs at *SEC* seconds (default: 30). Runners stop when either min or max is reached. |
 | `--lang <lang>` | Run only this language (e.g. `rust`, `python`). |
 | `--timeout N` | Timeout per run in seconds (default: 600). |
 | `--output FILE` | Write JSON results to *FILE* (default: `benchmark/results.json`). Use `--no-json` to skip. |
@@ -87,7 +88,8 @@ Each benchmark container receives:
 
 - **`GRAPH_FILE`** — path to the graph file (e.g. `/data/graph.txt`).
 - **`SSSP_ALGORITHM`** — `dijkstra` or `duan_mao_shu_yin` (which SSSP to run).
-- **`SSSP_MIN_SECONDS`** — when set to a positive number, the runner repeats SSSP(0) until wall-clock time ≥ that many seconds, then prints `DONE n reachable iterations`; otherwise it runs once and prints `DONE n reachable`.
+- **`SSSP_MIN_SECONDS`** — when set to a positive number, the runner repeats SSSP(0) until wall-clock time ≥ that many seconds (or **`SSSP_MAX_SECONDS`**), then prints `DONE n reachable iterations`; otherwise it runs once and prints `DONE n reachable`.
+- **`SSSP_MAX_SECONDS`** — cap for timed runs (default 30). Runners stop the iteration loop when elapsed time ≥ this value, so runs never exceed this length.
 
 ## SQLite results
 
