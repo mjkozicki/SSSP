@@ -104,7 +104,7 @@ def _start_harness(progress_url):
         if progress_url:
             env["PROGRESS_URL"] = progress_url.rstrip("/")
         _run_process = subprocess.Popen(
-            [sys.executable, str(REPO_ROOT / "benchmark" / "run_benchmarks.py")],
+            [sys.executable, str(REPO_ROOT / "benchmark" / "run_benchmarks.py"), "--build"],
             cwd=REPO_ROOT,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
