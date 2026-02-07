@@ -1,6 +1,7 @@
 package sssp
 
 import (
+	"container/heap"
 	"math"
 	"sort"
 )
@@ -17,6 +18,60 @@ type SsspResult struct {
 // VertexCount returns the number of vertices.
 func (r *SsspResult) VertexCount() int {
 	return len(r.Distance)
+}
+
+// dijkstraHeap is a min-heap of (distance, vertex) for Dijkstra.
+type dijkstraHeap []struct {
+	dist float64
+	v    int
+}
+
+func (h dijkstraHeap) Len() int           { return len(h) }
+func (h dijkstraHeap) Less(i, j int) bool { return h[i].dist < h[j].dist }
+func (h dijkstraHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *dijkstraHeap) Push(x any)        { *h = append(*h, x.(struct{ dist float64; v int })) }
+func (h *dijkstraHeap) Pop() any {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[:n-1]
+	return x
+}
+
+// Dijkstra runs SSSP from source using Dijkstra's algorithm (O((V+E) log V)).
+// Returns the same result type as DuanMaoShuYin. Predecessor is -1 for source or unreachable.
+func Dijkstra(g *Graph, source int) *SsspResult {
+	n := g.VertexCount()
+	if n == 0 {
+		return &SsspResult{}
+	}
+	d := make([]float64, n)
+	pred := make([]int, n)
+	for i := range d {
+		d[i] = math.Inf(1)
+		pred[i] = -1
+	}
+	d[source] = 0
+	pq := &dijkstraHeap{}
+	heap.Init(pq)
+	heap.Push(pq, struct{ dist float64; v int }{0, source})
+	for pq.Len() > 0 {
+		entry := heap.Pop(pq).(struct{ dist float64; v int })
+		du, u := entry.dist, entry.v
+		if du > d[u] {
+			continue
+		}
+		for _, e := range g.OutEdges(u) {
+			v, w := e.to, e.weight
+			newD := d[u] + w
+			if newD < d[v] {
+				d[v] = newD
+				pred[v] = u
+				heap.Push(pq, struct{ dist float64; v int }{newD, v})
+			}
+		}
+	}
+	return &SsspResult{Distance: d, Predecessor: pred}
 }
 
 // DuanMaoShuYin runs SSSP from source using the Duan–Mao–Shu–Yin algorithm.

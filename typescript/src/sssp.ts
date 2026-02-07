@@ -12,6 +12,64 @@ export interface SsspResult {
   predecessor: (number | null)[];
 }
 
+/**
+ * Dijkstra's algorithm: O((V+E) log V) SSSP. Same result type as duanMaoShuYin.
+ * See https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+ */
+export function dijkstra(g: Graph, source: number): SsspResult {
+  const n = g.vertexCount();
+  if (n === 0) return { distance: [], predecessor: [] };
+
+  const d = Array.from({ length: n }, () => Infinity);
+  const pred: (number | null)[] = Array.from({ length: n }, () => null);
+  d[source] = 0;
+
+  const heap: [number, number][] = []; // [dist, v] min-heap
+  const push = (dist: number, v: number) => {
+    heap.push([dist, v]);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = Math.floor((i - 1) / 2);
+      if (heap[p][0] <= heap[i][0]) break;
+      [heap[i], heap[p]] = [heap[p], heap[i]];
+      i = p;
+    }
+  };
+  const pop = (): [number, number] | null => {
+    if (heap.length === 0) return null;
+    const top = heap[0];
+    heap[0] = heap[heap.length - 1];
+    heap.pop();
+    let i = 0;
+    while (true) {
+      const l = 2 * i + 1, r = 2 * i + 2;
+      let small = i;
+      if (l < heap.length && heap[l][0] < heap[small][0]) small = l;
+      if (r < heap.length && heap[r][0] < heap[small][0]) small = r;
+      if (small === i) break;
+      [heap[i], heap[small]] = [heap[small], heap[i]];
+      i = small;
+    }
+    return top;
+  };
+
+  push(0, source);
+  while (heap.length > 0) {
+    const top = pop()!;
+    const [du, u] = top;
+    if (du > d[u]) continue;
+    for (const [v, w] of g.outEdges(u)) {
+      const newD = d[u] + w;
+      if (newD < d[v]) {
+        d[v] = newD;
+        pred[v] = u;
+        push(newD, v);
+      }
+    }
+  }
+  return { distance: d, predecessor: pred };
+}
+
 export function duanMaoShuYin(g: Graph, source: number): SsspResult {
   const n = g.vertexCount();
   if (n === 0) return { distance: [], predecessor: [] };

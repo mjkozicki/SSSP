@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import heapq
 import math
 from typing import Optional
 
@@ -9,6 +10,29 @@ from graph import Graph
 
 MAX_ITER = 100_000_000
 EPS = 1e-12
+
+
+def dijkstra(g: Graph, source: int) -> SsspResult:
+    """Dijkstra's algorithm: O((V+E) log V) SSSP with a min-heap. Returns same result type as duan_mao_shu_yin."""
+    n = g.vertex_count()
+    if n == 0:
+        return SsspResult([], [])
+    dist = [math.inf] * n
+    pred: list[Optional[int]] = [None] * n
+    dist[source] = 0.0
+    # Min-heap: (distance, vertex). We push (d, v) when we relax; skip when stale.
+    heap: list[tuple[float, int]] = [(0.0, source)]
+    while heap:
+        du, u = heapq.heappop(heap)
+        if du > dist[u]:
+            continue
+        for v, w in g.out_edges(u):
+            new_d = dist[u] + w
+            if new_d < dist[v]:
+                dist[v] = new_d
+                pred[v] = u
+                heapq.heappush(heap, (new_d, v))
+    return SsspResult(dist, pred)
 
 
 class SsspResult:

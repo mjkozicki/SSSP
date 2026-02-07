@@ -7,4 +7,4 @@ mod graph;
 mod sssp;
 
 pub use graph::Graph;
-pub use sssp::{duan_mao_shu_yin, SsspResult};
+pub use sssp::{dijkstra, duan_mao_shu_yin, SsspResult};

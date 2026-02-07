@@ -56,6 +56,39 @@ class SsspResult {
     }
 }
 
+/**
+ * Dijkstra's algorithm: O((V+E) log V) SSSP. Same result type as duan_mao_shu_yin.
+ * See https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+ */
+function dijkstra(Graph $g, int $source): SsspResult {
+    $n = $g->vertexCount();
+    if ($n === 0) return new SsspResult([], []);
+
+    $d = array_fill(0, $n, INF);
+    $pred = array_fill(0, $n, null);
+    $d[$source] = 0.0;
+
+    $pq = new \SplPriorityQueue();
+    $pq->setExtractFlags(\SplPriorityQueue::EXTR_BOTH);
+    $pq->insert($source, -0.0); // SplPriorityQueue is max-heap; use -dist so min dist extracted first
+    while (!$pq->isEmpty()) {
+        $elem = $pq->extract();
+        $u = $elem['data'];
+        $du = -$elem['priority'];
+        if ($du > $d[$u]) continue;
+        foreach ($g->outEdges($u) as $e) {
+            [$v, $w] = $e;
+            $newD = $d[$u] + $w;
+            if ($newD < $d[$v]) {
+                $d[$v] = $newD;
+                $pred[$v] = $u;
+                $pq->insert($v, -$newD);
+            }
+        }
+    }
+    return new SsspResult($d, $pred);
+}
+
 function duan_mao_shu_yin(Graph $g, int $source): SsspResult {
     $n = $g->vertexCount();
     if ($n === 0) return new SsspResult([], []);

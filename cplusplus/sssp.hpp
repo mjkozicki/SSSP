@@ -17,6 +17,9 @@ struct SsspResult {
 
 SsspResult duan_mao_shu_yin(const Graph& g, size_t source);
 
+/** Dijkstra's algorithm: O((V+E) log V) SSSP. Same result type as duan_mao_shu_yin. */
+SsspResult dijkstra(const Graph& g, size_t source);
+
 }  // namespace sssp
 
 #endif

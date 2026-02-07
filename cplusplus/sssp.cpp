@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
+#include <queue>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
@@ -341,6 +343,31 @@ SsspResult duan_mao_shu_yin(const Graph& g, size_t source) {
   std::vector<size_t> s = {source};
   bmssp(g, d, pred, l, kInf, s, n, k, t);
 
+  return {std::move(d), std::move(pred)};
+}
+
+SsspResult dijkstra(const Graph& g, size_t source) {
+  size_t n = g.vertex_count();
+  if (n == 0) return {{}, {}};
+  std::vector<double> d(n, kInf);
+  std::vector<std::optional<size_t>> pred(n);
+  d[source] = 0;
+  using Entry = std::pair<double, size_t>;
+  std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> pq;
+  pq.push({0.0, source});
+  while (!pq.empty()) {
+    auto [du, u] = pq.top();
+    pq.pop();
+    if (du > d[u]) continue;
+    for (const auto& [v, w] : g.out_edges(u)) {
+      double new_d = d[u] + w;
+      if (new_d < d[v]) {
+        d[v] = new_d;
+        pred[v] = u;
+        pq.push({new_d, v});
+      }
+    }
+  }
   return {std::move(d), std::move(pred)};
 }
 

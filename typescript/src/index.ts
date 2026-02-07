@@ -1,2 +1,2 @@
 export { Graph } from './graph';
-export { duanMaoShuYin, type SsspResult } from './sssp';
+export { dijkstra, duanMaoShuYin, type SsspResult } from './sssp';

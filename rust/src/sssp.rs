@@ -1,9 +1,31 @@
 //! O(m log^{2/3} n) deterministic SSSP (Duan–Mao–Shu–Yin).
 //! Comparison-addition model; non-negative real weights.
 
+use std::cmp::{Ordering, Reverse};
+use std::collections::BinaryHeap;
 use std::collections::HashSet;
 
 use crate::graph::Graph;
+
+/// Wrapper so f64 can be used in BinaryHeap (min-heap by Reverse<F64Ord>).
+#[derive(Clone, Copy)]
+struct F64Ord(f64);
+impl PartialEq for F64Ord {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+impl Eq for F64Ord {}
+impl PartialOrd for F64Ord {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+impl Ord for F64Ord {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
+}
 
 /// Result of single-source shortest path: distances and predecessors.
 /// Unreachable vertices have distance `f64::INFINITY` and predecessor `None`.
@@ -21,6 +43,41 @@ impl SsspResult {
 
 const MAX_ITER: usize = 100_000_000;
 const EPS: f64 = 1e-12;
+
+/// Dijkstra's algorithm: O((V+E) log V) SSSP with a min-heap.
+/// Returns the same result type as `duan_mao_shu_yin`.
+/// See https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+pub fn dijkstra(g: &Graph, source: usize) -> SsspResult {
+    let n = g.vertex_count();
+    if n == 0 {
+        return SsspResult {
+            distance: vec![],
+            predecessor: vec![],
+        };
+    }
+    let mut d = vec![f64::INFINITY; n];
+    let mut pred = vec![None; n];
+    d[source] = 0.0;
+    let mut heap: BinaryHeap<Reverse<(F64Ord, usize)>> = BinaryHeap::new();
+    heap.push(Reverse((F64Ord(0.0), source)));
+    while let Some(Reverse((F64Ord(du), u))) = heap.pop() {
+        if du > d[u] {
+            continue;
+        }
+        for &(v, w) in g.out_edges(u) {
+            let new_d = d[u] + w;
+            if new_d < d[v] {
+                d[v] = new_d;
+                pred[v] = Some(u);
+                heap.push(Reverse((F64Ord(new_d), v)));
+            }
+        }
+    }
+    SsspResult {
+        distance: d,
+        predecessor: pred,
+    }
+}
 
 /// Runs SSSP from `source` using the Duan–Mao–Shu–Yin algorithm.
 /// Returns distances and predecessor pointers.
