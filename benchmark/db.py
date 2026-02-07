@@ -58,11 +58,13 @@ def init_db():
     try:
         conn.executescript(SCHEMA)
         conn.commit()
-        # Migration: add algorithm column if missing (older DBs)
-        cur = conn.execute("SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name='algorithm'")
-        if cur.fetchone()[0] == 0:
+        # Migration: add algorithm column if missing (older DBs). Try ALTER; ignore if column exists.
+        try:
             conn.execute("ALTER TABLE sessions ADD COLUMN algorithm TEXT NOT NULL DEFAULT 'duan_mao_shu_yin'")
             conn.commit()
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e).lower():
+                raise
     finally:
         conn.close()
 

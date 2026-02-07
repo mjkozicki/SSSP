@@ -1,90 +1,80 @@
 {
   "csharp": {
-    "wall_sec": 0.931,
+    "wall_sec": 0.646,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "rust": {
-    "wall_sec": 0.376,
+    "wall_sec": 0.296,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "cplusplus": {
-    "wall_sec": 0.515,
+    "wall_sec": 0.343,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "go": {
-    "wall_sec": 0.269,
+    "wall_sec": 0.237,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "java": {
-    "wall_sec": 0.771,
+    "wall_sec": 0.649,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "php": {
-    "wall_sec": 0.338,
+    "wall_sec": 0.339,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "python": {
-    "wall_sec": 1.016,
+    "wall_sec": 0.833,
     "peak_mem_mb": 0,
     "total_cpu_sec": 0.0,
     "cpu_utilization": []
   },
   "typescript": {
-    "wall_sec": 17.078,
-    "peak_mem_mb": 71.89,
-    "total_cpu_sec": 15.502,
+    "wall_sec": 13.135,
+    "peak_mem_mb": 71.77,
+    "total_cpu_sec": 11.419,
     "cpu_utilization": [
       {
-        "elapsed_sec": 1.54,
-        "cpu_pct": 104.61,
-        "mem_mb": 68.11
+        "elapsed_sec": 1.53,
+        "cpu_pct": 104.33,
+        "mem_mb": 55.34
       },
       {
-        "elapsed_sec": 3.6,
-        "cpu_pct": 101.38,
-        "mem_mb": 60.61
+        "elapsed_sec": 3.59,
+        "cpu_pct": 103.25,
+        "mem_mb": 60.63
       },
       {
         "elapsed_sec": 5.65,
-        "cpu_pct": 100.71,
-        "mem_mb": 55.95
+        "cpu_pct": 100.87,
+        "mem_mb": 71.77
       },
       {
-        "elapsed_sec": 7.7,
-        "cpu_pct": 101.68,
-        "mem_mb": 59.88
+        "elapsed_sec": 7.69,
+        "cpu_pct": 100.33,
+        "mem_mb": 65.63
       },
       {
         "elapsed_sec": 9.74,
-        "cpu_pct": 100.29,
-        "mem_mb": 58.07
+        "cpu_pct": 102.25,
+        "mem_mb": 60.06
       },
       {
-        "elapsed_sec": 12.78,
-        "cpu_pct": 100.21,
-        "mem_mb": 62.38
-      },
-      {
-        "elapsed_sec": 14.84,
-        "cpu_pct": 100.22,
-        "mem_mb": 71.89
-      },
-      {
-        "elapsed_sec": 16.89,
-        "cpu_pct": 101.01,
-        "mem_mb": 69.09
+        "elapsed_sec": 12.75,
+        "cpu_pct": 100.4,
+        "mem_mb": 67.32
       }
     ]
   }

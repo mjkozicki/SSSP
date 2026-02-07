@@ -46,14 +46,24 @@ def _broadcast(obj):
 def _get_sessions(limit=None):
     conn = get_connection()
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
-    cur = conn.execute(
-        """SELECT s.id, s.created_at, s.languages, s.algorithm,
-                  (SELECT COUNT(*) FROM runs r WHERE r.session_id = s.id) AS run_count
-           FROM sessions s
-           ORDER BY s.id DESC""" + (" LIMIT ?" if limit else ""),
-        (limit,) if limit else (),
-    )
-    rows = cur.fetchall()
+    try:
+        cur = conn.execute(
+            """SELECT s.id, s.created_at, s.languages, s.algorithm,
+                      (SELECT COUNT(*) FROM runs r WHERE r.session_id = s.id) AS run_count
+               FROM sessions s
+               ORDER BY s.id DESC""" + (" LIMIT ?" if limit else ""),
+            (limit,) if limit else (),
+        )
+        rows = cur.fetchall()
+    except Exception:
+        cur = conn.execute(
+            """SELECT s.id, s.created_at, s.languages,
+                      (SELECT COUNT(*) FROM runs r WHERE r.session_id = s.id) AS run_count
+               FROM sessions s
+               ORDER BY s.id DESC""" + (" LIMIT ?" if limit else ""),
+            (limit,) if limit else (),
+        )
+        rows = [dict(r, algorithm="duan_mao_shu_yin") for r in cur.fetchall()]
     conn.close()
     return rows
 
@@ -75,9 +85,15 @@ def _get_metrics_for_charts():
     """Sessions ordered by id; for each session, list of runs with language and metrics."""
     conn = get_connection()
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
-    sessions = conn.execute(
-        "SELECT id, created_at, languages, algorithm FROM sessions ORDER BY id"
-    ).fetchall()
+    try:
+        sessions = conn.execute(
+            "SELECT id, created_at, languages, algorithm FROM sessions ORDER BY id"
+        ).fetchall()
+    except Exception:
+        sessions = conn.execute(
+            "SELECT id, created_at, languages FROM sessions ORDER BY id"
+        ).fetchall()
+        sessions = [dict(s, algorithm="duan_mao_shu_yin") for s in sessions]
     out = []
     for s in sessions:
         runs = conn.execute(
@@ -148,9 +164,15 @@ def api_session(session_id):
     if not runs:
         return jsonify({"error": "not found"}), 404
     conn = get_connection()
-    row = conn.execute(
-        "SELECT id, created_at, languages, algorithm FROM sessions WHERE id = ?", (session_id,)
-    ).fetchone()
+    try:
+        row = conn.execute(
+            "SELECT id, created_at, languages, algorithm FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+    except Exception:
+        row = conn.execute(
+            "SELECT id, created_at, languages FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        row = (row[0], row[1], row[2], "duan_mao_shu_yin") if row else None
     conn.close()
     if not row:
         return jsonify({"error": "not found"}), 404

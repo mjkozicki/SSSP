@@ -17,7 +17,8 @@ SSSPResult r;
 if (minSec > 0)
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
-    int iters = 0;
+    r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+    int iters = 1;
     while (sw.Elapsed.TotalSeconds < minSec && sw.Elapsed.TotalSeconds < maxSec)
     {
         r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);

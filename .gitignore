@@ -4,6 +4,7 @@
 *~
 .env
 .env.local
+results.json
 
 # C#
 csharp/**/bin/
