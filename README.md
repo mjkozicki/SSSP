@@ -10,6 +10,28 @@ Based on the paper:
 
 ---
 
+## Quick start
+
+From the repo root, run the setup script to install dependencies (Python web UI, TypeScript) and generate the benchmark dataset:
+
+```bash
+./setup.sh
+```
+
+Optionally build all benchmark Docker images so you can run the full benchmark without building later:
+
+```bash
+./setup.sh --build-docker
+```
+
+Then:
+
+- **Run the benchmark:** `python benchmark/run_benchmarks.py` (add `--build` if you didn’t use `--build-docker`)
+- **Start the web UI:** `python web/app.py` — open the URL printed in the console to run the test suite and view history/charts
+- **Run tests per language:** see [Language-specific details](#language-specific-details) below (e.g. `cd csharp && dotnet test`, `cd rust && cargo test`)
+
+---
+
 ## Algorithm overview
 
 - **Problem:** Given a directed graph *G* with *n* vertices, *m* edges, non-negative real weights *w(e)*, and a source *s*, compute the shortest path distances (and optionally predecessors) from *s* to every vertex.
@@ -32,6 +54,7 @@ Based on the paper:
 SSSP/
 ├── README.md
 ├── LICENSE
+├── setup.sh         # Quick setup: deps, dataset, optional Docker images
 ├── .gitignore
 ├── benchmark/       # Benchmark harness, Dockerfiles, dataset, SQLite results
 ├── web/             # Web UI to run benchmarks and view history/charts
