@@ -47,7 +47,7 @@ def _get_sessions(limit=None):
     conn = get_connection()
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
     cur = conn.execute(
-        """SELECT s.id, s.created_at, s.languages,
+        """SELECT s.id, s.created_at, s.languages, s.algorithm,
                   (SELECT COUNT(*) FROM runs r WHERE r.session_id = s.id) AS run_count
            FROM sessions s
            ORDER BY s.id DESC""" + (" LIMIT ?" if limit else ""),
@@ -76,7 +76,7 @@ def _get_metrics_for_charts():
     conn = get_connection()
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
     sessions = conn.execute(
-        "SELECT id, created_at, languages FROM sessions ORDER BY id"
+        "SELECT id, created_at, languages, algorithm FROM sessions ORDER BY id"
     ).fetchall()
     out = []
     for s in sessions:
@@ -89,22 +89,29 @@ def _get_metrics_for_charts():
             "session_id": s["id"],
             "created_at": s["created_at"],
             "languages": s["languages"],
+            "algorithm": s.get("algorithm", "duan_mao_shu_yin"),
             "runs": [dict(r) for r in runs],
         })
     conn.close()
     return out
 
 
-def _start_harness(progress_url):
+def _start_harness(progress_url, algorithm="duan_mao_shu_yin", min_seconds=0):
     global _run_process
+    if algorithm not in ("dijkstra", "duan_mao_shu_yin"):
+        algorithm = "duan_mao_shu_yin"
+    min_seconds = max(0.0, float(min_seconds))
     with _run_lock:
         if _run_process is not None and _run_process.poll() is None:
             return False
         env = os.environ.copy()
         if progress_url:
             env["PROGRESS_URL"] = progress_url.rstrip("/")
+        cmd = [sys.executable, str(REPO_ROOT / "benchmark" / "run_benchmarks.py"), "--build", "--algorithm", algorithm]
+        if min_seconds > 0:
+            cmd.extend(["--min-seconds", str(min_seconds)])
         _run_process = subprocess.Popen(
-            [sys.executable, str(REPO_ROOT / "benchmark" / "run_benchmarks.py"), "--build"],
+            cmd,
             cwd=REPO_ROOT,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -142,7 +149,7 @@ def api_session(session_id):
         return jsonify({"error": "not found"}), 404
     conn = get_connection()
     row = conn.execute(
-        "SELECT id, created_at, languages FROM sessions WHERE id = ?", (session_id,)
+        "SELECT id, created_at, languages, algorithm FROM sessions WHERE id = ?", (session_id,)
     ).fetchone()
     conn.close()
     if not row:
@@ -151,6 +158,7 @@ def api_session(session_id):
         "id": row[0],
         "created_at": row[1],
         "languages": row[2],
+        "algorithm": row[3] if len(row) > 3 else "duan_mao_shu_yin",
         "runs": runs,
     })
 
@@ -191,15 +199,20 @@ def api_progress():
 def api_run():
     init_db()
     progress_url = None
+    algorithm = "duan_mao_shu_yin"
+    min_seconds = 0
     if request.is_json:
-        progress_url = (request.get_json(silent=True) or {}).get("progressUrl")
+        body = request.get_json(silent=True) or {}
+        progress_url = body.get("progressUrl")
+        algorithm = body.get("algorithm", algorithm)
+        min_seconds = body.get("minSeconds", min_seconds)
     if not progress_url and request.referrer:
         from urllib.parse import urlparse
         p = urlparse(request.referrer)
         progress_url = p.scheme + "://" + p.netloc
     if not progress_url:
         progress_url = "http://127.0.0.1:5000"
-    if not _start_harness(progress_url):
+    if not _start_harness(progress_url, algorithm, min_seconds):
         return jsonify({"started": False, "message": "A test suite is already running."}), 409
     return jsonify({"started": True})
 

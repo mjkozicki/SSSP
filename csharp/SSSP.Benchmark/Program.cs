@@ -8,9 +8,28 @@ if (string.IsNullOrEmpty(path) || !File.Exists(path))
 }
 
 var g = LoadGraph(path);
-var r = DuanMaoShuYinSSSP.Solve(g, 0);
-int reachable = r.Distance.Count(d => double.IsFinite(d));
-Console.WriteLine($"DONE {r.VertexCount} {reachable}");
+var algo = (Environment.GetEnvironmentVariable("SSSP_ALGORITHM") ?? "duan_mao_shu_yin").Trim().ToLowerInvariant();
+var minSecRaw = Environment.GetEnvironmentVariable("SSSP_MIN_SECONDS");
+double minSec = double.TryParse(minSecRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var ms) ? ms : 0;
+SSSPResult r;
+if (minSec > 0)
+{
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    int iters = 0;
+    while (sw.Elapsed.TotalSeconds < minSec)
+    {
+        r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+        iters++;
+    }
+    int reachable = r.Distance.Count(d => double.IsFinite(d));
+    Console.WriteLine($"DONE {r.VertexCount} {reachable} {iters}");
+}
+else
+{
+    r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+    int reachable = r.Distance.Count(d => double.IsFinite(d));
+    Console.WriteLine($"DONE {r.VertexCount} {reachable}");
+}
 
 static Graph LoadGraph(string path)
 {

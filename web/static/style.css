@@ -72,6 +72,43 @@ body {
   font-size: 0.9rem;
 }
 
+.run-section .run-options {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.run-section .run-options label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.run-section .run-options select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.run-section .run-options-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.run-section .run-options-check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+
 .run-section .run-row {
   display: flex;
   align-items: center;

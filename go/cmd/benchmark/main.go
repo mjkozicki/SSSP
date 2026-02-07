@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"sssp"
 )
@@ -47,12 +48,47 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	r := sssp.DuanMaoShuYin(g, 0)
-	reachable := 0
-	for _, d := range r.Distance {
-		if d < 1e30 {
-			reachable++
+	algo := strings.TrimSpace(strings.ToLower(os.Getenv("SSSP_ALGORITHM")))
+	if algo == "" {
+		algo = "duan_mao_shu_yin"
+	}
+	minSec := 0.0
+	if s := os.Getenv("SSSP_MIN_SECONDS"); s != "" {
+		if f, err := strconv.ParseFloat(strings.TrimSpace(s), 64); err == nil && f > 0 {
+			minSec = f
 		}
 	}
-	fmt.Println("DONE", r.VertexCount(), reachable)
+	var r *sssp.SsspResult
+	if minSec > 0 {
+		start := time.Now()
+		iters := 0
+		for time.Since(start).Seconds() < minSec {
+			if algo == "dijkstra" {
+				r = sssp.Dijkstra(g, 0)
+			} else {
+				r = sssp.DuanMaoShuYin(g, 0)
+			}
+			iters++
+		}
+		reachable := 0
+		for _, d := range r.Distance {
+			if d < 1e30 {
+				reachable++
+			}
+		}
+		fmt.Println("DONE", r.VertexCount(), reachable, iters)
+	} else {
+		if algo == "dijkstra" {
+			r = sssp.Dijkstra(g, 0)
+		} else {
+			r = sssp.DuanMaoShuYin(g, 0)
+		}
+		reachable := 0
+		for _, d := range r.Distance {
+			if d < 1e30 {
+				reachable++
+			}
+		}
+		fmt.Println("DONE", r.VertexCount(), reachable)
+	}
 }

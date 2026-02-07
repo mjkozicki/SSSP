@@ -1,5 +1,6 @@
 (function () {
   const runBtn = document.getElementById("runBtn");
+  const algorithmSelect = document.getElementById("algorithmSelect");
   const runStatus = document.getElementById("runStatus");
   const runProgress = document.getElementById("runProgress");
   const runProgressHeading = document.getElementById("runProgressHeading");
@@ -149,15 +150,20 @@
     return d.toLocaleString("en-US", { dateStyle: "short", timeStyle: "short", hour12: false });
   }
 
+  function algorithmLabel(algo) {
+    return algo === "dijkstra" ? "Dijkstra" : "Duan–Mao–Shu–Yin";
+  }
+
   function renderSessions(sessions) {
     if (!sessions.length) {
-      sessionsBody.innerHTML = '<tr><td colspan="5" class="empty">No runs yet. Start a test suite above.</td></tr>';
+      sessionsBody.innerHTML = '<tr><td colspan="6" class="empty">No runs yet. Start a test suite above.</td></tr>';
       return;
     }
     sessionsBody.innerHTML = sessions.map((s) => `
       <tr>
         <td class="num">#${s.id}</td>
         <td>${formatDate(s.created_at)}</td>
+        <td>${escapeHtml(algorithmLabel(s.algorithm || "duan_mao_shu_yin"))}</td>
         <td>${escapeHtml(s.languages || "")}</td>
         <td class="num">${s.run_count ?? 0}</td>
         <td><a href="#" data-session-id="${s.id}">View results</a></td>
@@ -184,7 +190,7 @@
     const cur = sessionSelect.value;
     sessionSelect.innerHTML = sessions.length
       ? '<option value="">Select session…</option>' + sessions.map((s) =>
-          `<option value="${s.id}">#${s.id} — ${formatDate(s.created_at)} (${s.run_count} runs)</option>`
+          `<option value="${s.id}">#${s.id} — ${formatDate(s.created_at)} — ${algorithmLabel(s.algorithm || "duan_mao_shu_yin")} (${s.run_count} runs)</option>`
         ).join("")
       : '<option value="">No sessions</option>';
     if (cur) sessionSelect.value = cur;
@@ -313,10 +319,19 @@
   runBtn.addEventListener("click", async () => {
     try {
       const progressUrl = window.location.origin;
+      const algorithm = algorithmSelect ? algorithmSelect.value : "duan_mao_shu_yin";
+      const minSecondsCheck = document.getElementById("minSecondsCheck");
+      const minSeconds = minSecondsCheck && minSecondsCheck.checked
+        ? parseFloat(minSecondsCheck.value) || 10
+        : 0;
       const result = await api("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ progressUrl: progressUrl })
+        body: JSON.stringify({
+          progressUrl: progressUrl,
+          algorithm: algorithm,
+          minSeconds: minSeconds
+        })
       });
       if (!result.started) {
         setStatus(result.message || "Could not start.", "error");

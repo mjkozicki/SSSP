@@ -18,7 +18,7 @@ try {
 } catch {
   lib = require("../../typescript/dist");
 }
-const { Graph, duanMaoShuYin } = lib;
+const { Graph, dijkstra, duanMaoShuYin } = lib;
 const content = readFileSync(path, "utf8");
 const lines = content.trim().split("\n");
 const [n, m] = lines[0].split(" ").map(Number);
@@ -27,6 +27,20 @@ for (let i = 1; i <= m; i++) {
   const [u, v, w] = lines[i].split(" ");
   g.addEdge(Number(u), Number(v), Number(w));
 }
-const r = duanMaoShuYin(g, 0);
-const reachable = r.distance.filter((d) => isFinite(d)).length;
-console.log("DONE", r.distance.length, reachable);
+const algo = (process.env.SSSP_ALGORITHM || "duan_mao_shu_yin").trim().toLowerCase();
+const minSec = Math.max(0, parseFloat(process.env.SSSP_MIN_SECONDS || "0") || 0);
+if (minSec > 0) {
+  const start = performance.now();
+  let iters = 0;
+  let r;
+  while ((performance.now() - start) / 1000 < minSec) {
+    r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
+    iters++;
+  }
+  const reachable = r.distance.filter((d) => isFinite(d)).length;
+  console.log("DONE", r.distance.length, reachable, iters);
+} else {
+  const r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
+  const reachable = r.distance.filter((d) => isFinite(d)).length;
+  console.log("DONE", r.distance.length, reachable);
+}

@@ -24,6 +24,19 @@ for ($i = 0; $i < $m; $i++) {
 }
 fclose($f);
 
-$r = duan_mao_shu_yin($g, 0);
-$reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-echo "DONE ", $r->vertexCount(), " ", $reachable, "\n";
+$algo = strtolower(trim((string) (getenv('SSSP_ALGORITHM') ?: 'duan_mao_shu_yin')));
+$minSec = (float) (getenv('SSSP_MIN_SECONDS') ?: 0);
+if ($minSec > 0) {
+    $start = microtime(true);
+    $iters = 0;
+    while ((microtime(true) - $start) < $minSec) {
+        $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
+        $iters++;
+    }
+    $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
+    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iters, "\n";
+} else {
+    $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
+    $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
+    echo "DONE ", $r->vertexCount(), " ", $reachable, "\n";
+}

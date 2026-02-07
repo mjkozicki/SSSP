@@ -15,7 +15,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
-    languages TEXT NOT NULL
+    languages TEXT NOT NULL,
+    algorithm TEXT NOT NULL DEFAULT 'duan_mao_shu_yin'
 );
 
 CREATE TABLE IF NOT EXISTS runs (
@@ -52,22 +53,29 @@ def get_connection():
 
 
 def init_db():
-    """Create tables if they do not exist."""
+    """Create tables if they do not exist; migrate existing DBs to add algorithm column."""
     conn = get_connection()
     try:
         conn.executescript(SCHEMA)
         conn.commit()
+        # Migration: add algorithm column if missing (older DBs)
+        cur = conn.execute("SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name='algorithm'")
+        if cur.fetchone()[0] == 0:
+            conn.execute("ALTER TABLE sessions ADD COLUMN algorithm TEXT NOT NULL DEFAULT 'duan_mao_shu_yin'")
+            conn.commit()
     finally:
         conn.close()
 
 
-def insert_session(languages: list[str]) -> int:
+def insert_session(languages: list[str], algorithm: str = "duan_mao_shu_yin") -> int:
     """Insert a new session; returns session_id."""
+    if algorithm not in ("dijkstra", "duan_mao_shu_yin"):
+        algorithm = "duan_mao_shu_yin"
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO sessions (created_at, languages) VALUES (?, ?)",
-            (datetime.now(timezone.utc).isoformat(), ",".join(languages)),
+            "INSERT INTO sessions (created_at, languages, algorithm) VALUES (?, ?, ?)",
+            (datetime.now(timezone.utc).isoformat(), ",".join(languages), algorithm),
         )
         conn.commit()
         return cur.lastrowid

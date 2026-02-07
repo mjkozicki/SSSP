@@ -103,8 +103,18 @@ def build_images(build: bool, progress_url=None):
     _post_progress(progress_url, {"event": "build_finished"})
 
 
-def run_container_and_collect_stats(image: str, timeout_sec: int = 600):
+ALGORITHMS = ("dijkstra", "duan_mao_shu_yin")
+
+
+def run_container_and_collect_stats(
+    image: str,
+    timeout_sec: int = 600,
+    algorithm: str = "duan_mao_shu_yin",
+    min_seconds: float = 0,
+):
     """Run container with -v data:/data (detached), collect stats, then wait. Return wall time and stats."""
+    if algorithm not in ALGORITHMS:
+        algorithm = "duan_mao_shu_yin"
     stats_samples = []
     stats_stop = threading.Event()
     container_id = [None]
@@ -149,9 +159,12 @@ def run_container_and_collect_stats(image: str, timeout_sec: int = 600):
         "docker", "run", "-d", "--rm",
         "-v", f"{DATA_DIR}:/data:ro",
         "-e", "GRAPH_FILE=/data/graph.txt",
+        "-e", f"SSSP_ALGORITHM={algorithm}",
         image,
         "/data/graph.txt",
     ]
+    if min_seconds > 0:
+        cmd = cmd[:-2] + ["-e", f"SSSP_MIN_SECONDS={min_seconds}"] + cmd[-2:]
     start_wall = time.perf_counter()
     out = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=30)
     if out.returncode != 0:
@@ -206,17 +219,21 @@ def main():
     ap.add_argument("--no-json", action="store_true", help="Do not write JSON output")
     ap.add_argument("--timeout", type=int, default=600, help="Timeout per run (seconds)")
     ap.add_argument("--lang", choices=LANGUAGES, help="Run only this language")
+    ap.add_argument("--algorithm", choices=ALGORITHMS, default="duan_mao_shu_yin", help="SSSP algorithm: dijkstra or duan_mao_shu_yin")
+    ap.add_argument("--min-seconds", type=float, default=0, metavar="SEC", help="Run repeated iterations until at least SEC seconds elapsed (e.g. 10 for 10s timed run)")
     ap.add_argument("--progress-url", default=os.environ.get("PROGRESS_URL"), help="Web UI base URL for progress (e.g. http://127.0.0.1:5000)")
     args = ap.parse_args()
 
     progress_url = args.progress_url
+    algorithm = args.algorithm
+    min_seconds = max(0.0, args.min_seconds)
     os.chdir(REPO_ROOT)
     ensure_dataset()
     init_db()
     build_images(args.build, progress_url)
 
     languages = [args.lang] if args.lang else LANGUAGES
-    session_id = insert_session(languages)
+    session_id = insert_session(languages, algorithm)
     results = {}
 
     _post_progress(progress_url, {"event": "suite_started", "languages": languages})
@@ -225,7 +242,9 @@ def main():
         image = f"sssp-bench-{lang}"
         print(f"\n--- {lang} ---", flush=True)
         _post_progress(progress_url, {"event": "started", "language": lang})
-        wall, utilization, peak_mem, total_cpu, err = run_container_and_collect_stats(image, args.timeout)
+        wall, utilization, peak_mem, total_cpu, err = run_container_and_collect_stats(
+            image, args.timeout, algorithm, min_seconds
+        )
         if err:
             print(f"  Error: {err}", flush=True)
             results[lang] = {"error": err, "wall_sec": wall}

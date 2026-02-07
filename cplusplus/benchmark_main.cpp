@@ -1,11 +1,24 @@
 #include "graph.hpp"
 #include "sssp.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <string>
+
+static bool str_eq_ignore_case(const std::string& a, const char* b) {
+  size_t i = 0;
+  while (i < a.size() && *b) {
+    if (std::tolower(static_cast<unsigned char>(a[i])) != std::tolower(static_cast<unsigned char>(*b)))
+      return false;
+    i++;
+    b++;
+  }
+  return i == a.size() && *b == '\0';
+}
 
 int main(int argc, char** argv) {
   std::string path;
@@ -29,10 +42,42 @@ int main(int argc, char** argv) {
     f >> u >> v >> w;
     g.add_edge(u, v, w);
   }
-  auto r = sssp::duan_mao_shu_yin(g, 0);
+  const char* algo_env = std::getenv("SSSP_ALGORITHM");
+  std::string algo(algo_env ? algo_env : "duan_mao_shu_yin");
+  while (!algo.empty() && (algo.back() == ' ' || algo.back() == '\t')) algo.pop_back();
+  size_t start = 0;
+  while (start < algo.size() && (algo[start] == ' ' || algo[start] == '\t')) start++;
+  algo = algo.substr(start);
+  double min_sec = 0.0;
+  if (const char* min_env = std::getenv("SSSP_MIN_SECONDS")) {
+    char* end = nullptr;
+    min_sec = std::strtod(min_env, &end);
+    if (end == min_env || min_sec < 0) min_sec = 0.0;
+  }
   size_t reachable = 0;
-  for (double d : r.distance)
-    if (std::isfinite(d)) reachable++;
-  std::cout << "DONE " << r.vertex_count() << " " << reachable << "\n";
+  if (min_sec > 0.0) {
+    auto t0 = std::chrono::steady_clock::now();
+    std::chrono::duration<double> min_dur(min_sec);
+    size_t iters = 0;
+    sssp::SsspResult r = str_eq_ignore_case(algo, "dijkstra")
+        ? sssp::dijkstra(g, 0)
+        : sssp::duan_mao_shu_yin(g, 0);
+    while (std::chrono::steady_clock::now() - t0 < min_dur) {
+      r = str_eq_ignore_case(algo, "dijkstra")
+          ? sssp::dijkstra(g, 0)
+          : sssp::duan_mao_shu_yin(g, 0);
+      iters++;
+    }
+    for (double d : r.distance)
+      if (std::isfinite(d)) reachable++;
+    std::cout << "DONE " << r.vertex_count() << " " << reachable << " " << iters << "\n";
+  } else {
+    sssp::SsspResult r = str_eq_ignore_case(algo, "dijkstra")
+        ? sssp::dijkstra(g, 0)
+        : sssp::duan_mao_shu_yin(g, 0);
+    for (double d : r.distance)
+      if (std::isfinite(d)) reachable++;
+    std::cout << "DONE " << r.vertex_count() << " " << reachable << "\n";
+  }
   return 0;
 }
