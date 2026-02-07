@@ -66,17 +66,13 @@ fn main() {
             };
             iters += 1;
         }
-        let reachable = r.distance.iter().filter(|d| d.is_finite()).count();
-        println!("DONE {} {} {}", r.vertex_count(), reachable, iters);
         iters
     } else {
-        let r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
+        let _r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
             dijkstra(&g, 0)
         } else {
             duan_mao_shu_yin(&g, 0)
         };
-        let reachable = r.distance.iter().filter(|d| d.is_finite()).count();
-        println!("DONE {} {} 1", r.vertex_count(), reachable);
         1u64
     };
     if let Ok(result_file) = env::var("RESULT_FILE") {

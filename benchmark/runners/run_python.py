@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load graph from file, run SSSP(0), print DONE. Path = argv[1] or GRAPH_FILE env."""
+"""Load graph from file, run SSSP(0). Writes result to RESULT_FILE when set. Path = argv[1] or GRAPH_FILE env."""
 import json
 import os
 import sys
@@ -45,13 +45,11 @@ def main():
             else:
                 r = duan_mao_shu_yin(g, 0)
             iterations += 1
-        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), iterations)
     else:
         if algo == "dijkstra":
             r = dijkstra(g, 0)
         else:
             r = duan_mao_shu_yin(g, 0)
-        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), iterations)
     result_file = os.environ.get("RESULT_FILE")
     if result_file:
         with open(result_file, "w") as f:

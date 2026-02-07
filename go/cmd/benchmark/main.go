@@ -78,27 +78,14 @@ func main() {
 			}
 			iterations++
 		}
-		reachable := 0
-		for _, d := range r.Distance {
-			if d < 1e30 {
-				reachable++
-			}
-		}
-		fmt.Println("DONE", r.VertexCount(), reachable, iterations)
 	} else {
 		if algo == "dijkstra" {
 			r = sssp.Dijkstra(g, 0)
 		} else {
 			r = sssp.DuanMaoShuYin(g, 0)
 		}
-		reachable := 0
-		for _, d := range r.Distance {
-			if d < 1e30 {
-				reachable++
-			}
-		}
-		fmt.Println("DONE", r.VertexCount(), reachable, iterations)
 	}
+	_ = r
 	if resultFile := os.Getenv("RESULT_FILE"); resultFile != "" {
 		out, _ := json.Marshal(map[string]int{"iterations": iterations})
 		os.WriteFile(resultFile, out, 0644)

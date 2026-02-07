@@ -1,5 +1,5 @@
 /**
- * Load graph from file, run SSSP(0), print DONE. Path = argv[1] or GRAPH_FILE env.
+ * Load graph from file, run SSSP(0). Writes result to RESULT_FILE when set. Path = argv[1] or GRAPH_FILE env.
  * Run from repo root: node benchmark/runners/run_ts.mjs benchmark/data/graph.txt
  * (After building: node --experimental-vm-modules or node with dist)
  */
@@ -39,12 +39,8 @@ if (minSec > 0) {
     r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
     iterations++;
   }
-  const reachable = r.distance.filter((d) => isFinite(d)).length;
-  console.log("DONE", r.distance.length, reachable, iterations);
 } else {
   const r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
-  const reachable = r.distance.filter((d) => isFinite(d)).length;
-  console.log("DONE", r.distance.length, reachable, iterations);
 }
 const resultFile = process.env.RESULT_FILE;
 if (resultFile) {

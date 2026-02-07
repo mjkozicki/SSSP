@@ -61,7 +61,6 @@ int main(int argc, char** argv) {
     max_sec = std::strtod(max_env, &end);
     if (end == max_env || max_sec < 0) max_sec = 30.0;
   }
-  size_t reachable = 0;
   size_t iterations = 1;
   if (min_sec > 0.0) {
     auto t0 = std::chrono::steady_clock::now();
@@ -77,16 +76,10 @@ int main(int argc, char** argv) {
           : sssp::duan_mao_shu_yin(g, 0);
       iterations++;
     }
-    for (double d : r.distance)
-      if (std::isfinite(d)) reachable++;
-    std::cout << "DONE " << r.vertex_count() << " " << reachable << " " << iterations << "\n";
   } else {
     sssp::SsspResult r = str_eq_ignore_case(algo, "dijkstra")
         ? sssp::dijkstra(g, 0)
         : sssp::duan_mao_shu_yin(g, 0);
-    for (double d : r.distance)
-      if (std::isfinite(d)) reachable++;
-    std::cout << "DONE " << r.vertex_count() << " " << reachable << " " << iterations << "\n";
   }
   if (const char* result_path = std::getenv("RESULT_FILE"); result_path && result_path[0]) {
     std::ostringstream out;

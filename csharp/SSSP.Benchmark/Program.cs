@@ -25,14 +25,10 @@ if (minSec > 0)
         r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
         iterations++;
     }
-    int reachable = r.Distance.Count(d => double.IsFinite(d));
-    Console.WriteLine($"DONE {r.VertexCount} {reachable} {iterations}");
 }
 else
 {
     r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
-    int reachable = r.Distance.Count(d => double.IsFinite(d));
-    Console.WriteLine($"DONE {r.VertexCount} {reachable} {iterations}");
 }
 var resultFile = Environment.GetEnvironmentVariable("RESULT_FILE");
 if (!string.IsNullOrEmpty(resultFile))

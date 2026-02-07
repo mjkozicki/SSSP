@@ -1,6 +1,6 @@
 <?php
 /**
- * Load graph from file, run SSSP(0), print DONE. Path = argv[1] or GRAPH_FILE env.
+ * Load graph from file, run SSSP(0). Writes result to RESULT_FILE when set. Path = argv[1] or GRAPH_FILE env.
  * Run from repo root: php benchmark/runners/run_php.php benchmark/data/graph.txt
  */
 $repoRoot = getenv('REPO_ROOT') ?: dirname(__DIR__, 2);
@@ -35,12 +35,8 @@ if ($minSec > 0) {
         $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
         $iterations++;
     }
-    $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iterations, "\n";
 } else {
     $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
-    $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iterations, "\n";
 }
 $resultFile = getenv('RESULT_FILE');
 if ($resultFile !== false && $resultFile !== '') {

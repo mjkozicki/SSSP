@@ -41,16 +41,8 @@ public final class Benchmark {
                 r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
                 iterations++;
             } while (System.nanoTime() - startNanos < minNanos && System.nanoTime() - startNanos < maxNanos);
-            int reachable = 0;
-            for (double d : r.getDistance())
-                if (Double.isFinite(d)) reachable++;
-            System.out.println("DONE " + r.vertexCount() + " " + reachable + " " + iterations);
         } else {
             r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
-            int reachable = 0;
-            for (double d : r.getDistance())
-                if (Double.isFinite(d)) reachable++;
-            System.out.println("DONE " + r.vertexCount() + " " + reachable + " " + iterations);
         }
         String resultFile = System.getenv("RESULT_FILE");
         if (resultFile != null && !resultFile.isEmpty()) {
