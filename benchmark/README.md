@@ -128,6 +128,17 @@ Example `results.json`:
 }
 ```
 
+## Local APM (SigNoz)
+
+For local performance analysis with traces and metrics, you can run [SigNoz](https://signoz.io) (open-source APM) on your machine:
+
+```bash
+cd benchmark/signoz
+./install.sh
+```
+
+Then open **http://localhost:8080**. See [benchmark/signoz/README.md](signoz/README.md) for details and how to send OpenTelemetry data from the harness or runners.
+
 ## Runners and Dockerfiles
 
 - **Runners:** Each implementation has a benchmark entrypoint that reads the graph file (from `GRAPH_FILE` or argv), selects the algorithm from `SSSP_ALGORITHM` (default: Duan–Mao–Shu–Yin), runs SSSP(0) once or in a timed loop when `SSSP_MIN_SECONDS` is set, and prints `DONE n reachable` or `DONE n reachable iterations`.

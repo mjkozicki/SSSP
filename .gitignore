@@ -75,6 +75,9 @@ build/
 htmlcov/
 .mypy_cache/
 
+# SigNoz (cloned for local APM)
+benchmark/signoz/_signoz/
+
 # TypeScript / Node
 node_modules/
 npm-debug.log*
