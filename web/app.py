@@ -13,12 +13,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request, send_from_directory
 from simple_websocket import Server, ConnectionClosed
 
 from benchmark.db import get_connection, init_db
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(__name__)
+
+# Prefer Astro build when present (npm run build in web/)
+DIST_DIR = Path(__file__).resolve().parent / "dist"
+HAS_DIST = (DIST_DIR / "index.html").is_file()
 
 # In-memory: is a test suite currently running?
 _run_process = None
@@ -151,7 +155,21 @@ def _harness_running():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if HAS_DIST:
+        return send_from_directory(DIST_DIR, "index.html")
+    return (
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>SSSP Benchmark</title></head>"
+        "<body><p>Frontend not built. From repo root run: <code>cd web &amp;&amp; npm install &amp;&amp; npm run build</code></p></body></html>",
+        503,
+        {"Content-Type": "text/html; charset=utf-8"},
+    )
+
+
+@app.route("/assets/<path:filename>")
+def assets(filename):
+    if not HAS_DIST:
+        return "", 404
+    return send_from_directory(DIST_DIR / "assets", filename)
 
 
 @app.route("/api/status")

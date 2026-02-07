@@ -30,18 +30,26 @@ Charts plot these metrics **by session** (one point per language per session), s
 
 - Python 3.9+
 - Flask and simple-websocket (see `web/requirements.txt`)
+- Node.js 18+ and npm (for building the Astro frontend)
 - Benchmark SQLite DB at `benchmark/data/benchmark.db` (created when you run the benchmark harness or the web-triggered run at least once)
 - Docker (required when you trigger a test run from the UI; images are built automatically if you use “Run test suite” with the default behavior)
 
 ## Run the app
 
-From the **repo root**:
+The UI is an **Astro** static frontend; Flask serves it from `web/dist/` when that build exists.
+
+**Production (recommended):** build the frontend, then start Flask. From the **repo root**:
 
 ```bash
 pip install -r web/requirements.txt
+cd web && npm install && npm run build && cd ..
 python web/app.py
 ```
 
 The app binds to an available port and prints the URL (e.g. `Web UI available at http://localhost:54321`). Open that URL in your browser.
+
+If you run `python web/app.py` without building the Astro app, Flask returns a 503 with instructions to run `npm run build` in `web/`.
+
+**Frontend-only dev:** from `web/` run `npm run dev` for the Astro dev server. To use the API and WebSocket, run Flask as above (with `npm run build` first) and open the app via the Flask URL.
 
 The app reads and writes the same SQLite database used by `benchmark/run_benchmarks.py`. Any run you start from the UI runs the harness with `--build`, the selected **algorithm** (`--algorithm dijkstra` or `--algorithm duan_mao_shu_yin`), optional **`--min-seconds 10`** when “Timed run (≥10 s)” is checked, and `PROGRESS_URL` set so the UI receives live build and run progress over WebSocket; when the run finishes, history and charts refresh automatically.

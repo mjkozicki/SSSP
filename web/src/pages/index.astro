@@ -1,4 +1,110 @@
-(function () {
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout>
+  <header class="header">
+    <h1>SSSP Benchmark</h1>
+    <p class="tagline">Single-source shortest path test suite &amp; metrics</p>
+  </header>
+
+  <main class="main">
+    <section class="card run-section">
+      <h2>Run test suite</h2>
+      <p>Run the full benchmark across all languages (Docker required).</p>
+      <div class="run-options">
+        <label for="algorithmSelect">Algorithm</label>
+        <select id="algorithmSelect" aria-label="SSSP algorithm">
+          <option value="duan_mao_shu_yin">Duan–Mao–Shu–Yin</option>
+          <option value="dijkstra">Dijkstra</option>
+        </select>
+        <label class="run-options-check" for="minSecondsCheck">
+          <input type="checkbox" id="minSecondsCheck" value="10" aria-label="Run iterations for at least 10 seconds">
+          <span>Timed run (≥10 s)</span>
+        </label>
+      </div>
+      <div class="run-row">
+        <button type="button" id="runBtn" class="btn btn-primary">Run test suite</button>
+        <span id="runStatus" class="status" aria-live="polite"></span>
+      </div>
+      <div id="runProgress" class="run-progress hidden" aria-live="polite">
+        <h3 id="runProgressHeading">Current run</h3>
+        <ul id="runProgressList"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Historical test suite runs</h2>
+      <div class="table-wrap">
+        <table class="data-table" id="sessionsTable">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Date (UTC)</th>
+              <th>Algorithm</th>
+              <th>Languages</th>
+              <th>Runs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sessionsBody">
+            <tr><td colspan="6" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Metrics over time</h2>
+      <p class="chart-desc">Per-language metrics by session (latest sessions on the right).</p>
+      <div class="charts">
+        <div class="chart-wrap">
+          <h3>Wall time (s)</h3>
+          <canvas id="chartWall" aria-label="Wall time in seconds by session and language"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>Peak memory (MiB)</h3>
+          <canvas id="chartMem" aria-label="Peak memory in MiB by session and language"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>Total CPU (s)</h3>
+          <canvas id="chartCpu" aria-label="Total CPU seconds by session and language"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Test suite results</h2>
+      <div class="results-controls">
+        <label for="sessionSelect">Session</label>
+        <select id="sessionSelect">
+          <option value="">Loading…</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="runsTable">
+          <thead>
+            <tr>
+              <th>Language</th>
+              <th>Wall (s)</th>
+              <th>Peak mem (MiB)</th>
+              <th>CPU (s)</th>
+              <th>Runs</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="runsBody">
+            <tr><td colspan="6" class="empty">Select a session</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  import { Chart, registerables } from 'chart.js';
+  Chart.register(...registerables);
+
   const runBtn = document.getElementById("runBtn");
   const algorithmSelect = document.getElementById("algorithmSelect");
   const runStatus = document.getElementById("runStatus");
@@ -27,7 +133,13 @@
     return scheme + "//" + window.location.host + "/ws";
   }
 
-  var progressState = {}; // language -> { status, wall_sec, peak_mem_mb, total_cpu_sec, error }
+  let progressState = {};
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
 
   function renderProgressList() {
     const langs = Object.keys(progressState).sort();
@@ -140,8 +252,7 @@
   }
 
   async function loadSessions(limit = 50) {
-    const sessions = await api("/api/sessions?limit=" + limit);
-    return sessions;
+    return await api("/api/sessions?limit=" + limit);
   }
 
   function formatDate(iso) {
@@ -178,12 +289,6 @@
         loadSessionRuns(id);
       });
     });
-  }
-
-  function escapeHtml(s) {
-    const div = document.createElement("div");
-    div.textContent = s;
-    return div.innerHTML;
   }
 
   function fillSessionSelect(sessions) {
@@ -228,11 +333,10 @@
   sessionSelect.addEventListener("change", () => loadSessionRuns(sessionSelect.value));
 
   async function loadMetrics() {
-    const data = await api("/api/metrics");
-    return data;
+    return await api("/api/metrics");
   }
 
-  function buildChartData(metrics, valueKey, labelKey) {
+  function buildChartData(metrics, valueKey) {
     const languages = new Set();
     metrics.forEach((s) => s.runs.forEach((r) => languages.add(r.language)));
     const langList = [...languages].sort();
@@ -278,21 +382,21 @@
       }
     };
 
-    const wallData = buildChartData(metrics, "wall_sec", "Wall (s)");
+    const wallData = buildChartData(metrics, "wall_sec");
     chartWallInst = new Chart(chartWall.getContext("2d"), {
       type: "line",
       data: wallData,
       options: opts
     });
 
-    const memData = buildChartData(metrics, "peak_mem_mb", "Peak mem (MiB)");
+    const memData = buildChartData(metrics, "peak_mem_mb");
     chartMemInst = new Chart(chartMem.getContext("2d"), {
       type: "line",
       data: memData,
       options: opts
     });
 
-    const cpuData = buildChartData(metrics, "total_cpu_sec", "CPU (s)");
+    const cpuData = buildChartData(metrics, "total_cpu_sec");
     chartCpuInst = new Chart(chartCpu.getContext("2d"), {
       type: "line",
       data: cpuData,
@@ -357,4 +461,4 @@
 
   refresh();
   setInterval(refresh, 10000);
-})();
+</script>
