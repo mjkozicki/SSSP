@@ -1,0 +1,29 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+*.swp
+*~
+
+# Build outputs (rebuilt inside containers)
+**/target
+**/node_modules
+**/dist
+**/out
+**/bin
+**/obj
+**/build
+*.pyc
+__pycache__
+**/.pytest_cache
+
+# Docs and misc (not needed for build)
+*.md
+!docker/README.md
+
+# Rust
+rust/target
+
+# C++
+cplusplus/build

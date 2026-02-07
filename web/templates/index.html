@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSSP Benchmark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <h1>SSSP Benchmark</h1>
+    <p class="tagline">Single-source shortest path test suite &amp; metrics</p>
+  </header>
+
+  <main class="main">
+    <section class="card run-section">
+      <h2>Run test suite</h2>
+      <p>Run the full benchmark across all languages (Docker required).</p>
+      <div class="run-row">
+        <button type="button" id="runBtn" class="btn btn-primary">Run test suite</button>
+        <span id="runStatus" class="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Historical test suite runs</h2>
+      <div class="table-wrap">
+        <table class="data-table" id="sessionsTable">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Date (UTC)</th>
+              <th>Languages</th>
+              <th>Runs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sessionsBody">
+            <tr><td colspan="5" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Metrics over time</h2>
+      <p class="chart-desc">Per-language metrics by session (latest sessions on the right).</p>
+      <div class="charts">
+        <div class="chart-wrap">
+          <h3>Wall time (s)</h3>
+          <canvas id="chartWall" aria-label="Wall time in seconds by session and language"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>Peak memory (MiB)</h3>
+          <canvas id="chartMem" aria-label="Peak memory in MiB by session and language"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>Total CPU (s)</h3>
+          <canvas id="chartCpu" aria-label="Total CPU seconds by session and language"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Test suite results</h2>
+      <div class="results-controls">
+        <label for="sessionSelect">Session</label>
+        <select id="sessionSelect">
+          <option value="">Loading…</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="runsTable">
+          <thead>
+            <tr>
+              <th>Language</th>
+              <th>Wall (s)</th>
+              <th>Peak mem (MiB)</th>
+              <th>CPU (s)</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="runsBody">
+            <tr><td colspan="5" class="empty">Select a session</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

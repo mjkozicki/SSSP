@@ -1,0 +1,14 @@
+{
+  "name": "sssp",
+  "version": "0.1.0",
+  "description": "O(m log^{2/3} n) SSSP (Duan–Mao–Shu–Yin)",
+  "main": "dist/sssp.js",
+  "types": "dist/sssp.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test test/sssp.test.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

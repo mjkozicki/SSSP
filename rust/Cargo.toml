@@ -1,0 +1,16 @@
+[package]
+name = "sssp"
+version = "0.1.0"
+edition = "2021"
+description = "O(m log^{2/3} n) SSSP for directed graphs (Duan-Mao-Shu-Yin)"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "benchmark"
+path = "src/bin/benchmark.rs"
+
+[dependencies]
+
+[dev-dependencies]

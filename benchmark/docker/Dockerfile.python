@@ -1,0 +1,10 @@
+# Benchmark image: Python runner + sssp lib
+# Build from repo root: docker build -f benchmark/docker/Dockerfile.python .
+
+FROM python:3.12-slim
+WORKDIR /app
+COPY python/ python/
+COPY benchmark/runners/run_python.py /app/run_python.py
+ENV PYTHONPATH=/app/python
+ENV GRAPH_FILE=/data/graph.txt
+ENTRYPOINT ["python", "/app/run_python.py"]

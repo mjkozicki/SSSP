@@ -1,0 +1,14 @@
+# Benchmark image: build lib + benchmark binary
+# Build from repo root: docker build -f benchmark/docker/Dockerfile.rust .
+
+FROM rust:1.83-alpine AS build
+WORKDIR /src
+COPY rust/ rust/
+WORKDIR /src/rust
+RUN cargo build --release --bin benchmark
+
+FROM alpine:3.20
+RUN apk add --no-cache libgcc
+COPY --from=build /src/rust/target/release/benchmark /app/benchmark
+ENV GRAPH_FILE=/data/graph.txt
+ENTRYPOINT ["/app/benchmark"]

@@ -1,0 +1,3 @@
+# Ignore generated graph (large) and SQLite DB; keep .gitkeep
+graph.txt
+*.db

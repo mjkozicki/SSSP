@@ -1,0 +1,14 @@
+# Benchmark image: build library + benchmark console app, run on /data/graph.txt
+# Build from repo root: docker build -f benchmark/docker/Dockerfile.csharp .
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+WORKDIR /src
+COPY csharp/ csharp/
+WORKDIR /src/csharp
+RUN dotnet build SSSP.Benchmark/SSSP.Benchmark.csproj -c Release -o /app
+
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine
+WORKDIR /app
+COPY --from=build /app .
+ENV GRAPH_FILE=/data/graph.txt
+ENTRYPOINT ["dotnet", "benchmark.dll"]

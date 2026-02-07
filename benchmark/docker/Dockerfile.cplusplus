@@ -1,0 +1,15 @@
+# Benchmark image: build library + benchmark binary
+# Build from repo root: docker build -f benchmark/docker/Dockerfile.cplusplus .
+
+FROM alpine:3.20 AS build
+RUN apk add --no-cache build-base cmake
+WORKDIR /src
+COPY cplusplus/ cplusplus/
+WORKDIR /src/cplusplus
+RUN mkdir b && cd b && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . --target benchmark
+
+FROM alpine:3.20
+RUN apk add --no-cache libstdc++
+COPY --from=build /src/cplusplus/b/benchmark /app/benchmark
+ENV GRAPH_FILE=/data/graph.txt
+ENTRYPOINT ["/app/benchmark"]
