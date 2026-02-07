@@ -12,6 +12,7 @@
 **/dist
 **/out
 **/bin
+!rust/src/bin
 **/obj
 **/build
 *.pyc

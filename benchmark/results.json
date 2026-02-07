@@ -1,34 +1,91 @@
 {
   "csharp": {
-    "error": "Unable to find image 'sssp-bench-csharp:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-csharp, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.931,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "rust": {
-    "error": "Unable to find image 'sssp-bench-rust:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-rust, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.376,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "cplusplus": {
-    "error": "Unable to find image 'sssp-bench-cplusplus:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-cplusplus, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.515,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "go": {
-    "error": "Unable to find image 'sssp-bench-go:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-go, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.269,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "java": {
-    "error": "Unable to find image 'sssp-bench-java:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-java, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.771,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "php": {
-    "error": "Unable to find image 'sssp-bench-php:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-php, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 0.338,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "python": {
-    "error": "Unable to find image 'sssp-bench-python:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-python, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 1.016,
+    "peak_mem_mb": 0,
+    "total_cpu_sec": 0.0,
+    "cpu_utilization": []
   },
   "typescript": {
-    "error": "Unable to find image 'sssp-bench-typescript:latest' locally\ndocker: Error response from daemon: pull access denied for sssp-bench-typescript, repository does not exist or may require 'docker login'\n\nRun 'docker run --help' for more information\n",
-    "wall_sec": null
+    "wall_sec": 17.078,
+    "peak_mem_mb": 71.89,
+    "total_cpu_sec": 15.502,
+    "cpu_utilization": [
+      {
+        "elapsed_sec": 1.54,
+        "cpu_pct": 104.61,
+        "mem_mb": 68.11
+      },
+      {
+        "elapsed_sec": 3.6,
+        "cpu_pct": 101.38,
+        "mem_mb": 60.61
+      },
+      {
+        "elapsed_sec": 5.65,
+        "cpu_pct": 100.71,
+        "mem_mb": 55.95
+      },
+      {
+        "elapsed_sec": 7.7,
+        "cpu_pct": 101.68,
+        "mem_mb": 59.88
+      },
+      {
+        "elapsed_sec": 9.74,
+        "cpu_pct": 100.29,
+        "mem_mb": 58.07
+      },
+      {
+        "elapsed_sec": 12.78,
+        "cpu_pct": 100.21,
+        "mem_mb": 62.38
+      },
+      {
+        "elapsed_sec": 14.84,
+        "cpu_pct": 100.22,
+        "mem_mb": 71.89
+      },
+      {
+        "elapsed_sec": 16.89,
+        "cpu_pct": 101.01,
+        "mem_mb": 69.09
+      }
+    ]
   }
 }

@@ -199,7 +199,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> find_pivots(
     if (w.size() > k * s.size()) return {s, w};
   }
 
-  in_w = std::unordered_set<size_t>(w.begin(), w.end());
+  std::unordered_set<size_t> in_w(w.begin(), w.end());
   std::vector<std::optional<size_t>> parent(g.vertex_count());
   for (size_t u : w) {
     for (const auto& [v, w_e] : g.out_edges(u)) {

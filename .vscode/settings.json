@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "SSSP",
+            "database": "${workspaceFolder:SSSP}/benchmark/data/benchmark.db"
+        }
+    ]
+}

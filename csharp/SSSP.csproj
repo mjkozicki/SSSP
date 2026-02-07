@@ -13,4 +13,10 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Library only: exclude tests and benchmark so they are not compiled into the library -->
+    <Compile Remove="SSSP.Tests/**" />
+    <Compile Remove="SSSP.Benchmark/**" />
+  </ItemGroup>
+
 </Project>
