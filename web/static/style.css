@@ -167,6 +167,8 @@ body {
 }
 
 .run-progress li.pending .dot { background: var(--text-muted); }
+.run-progress li.building .dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.run-progress li.built .dot { background: var(--success); }
 .run-progress li.running .dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
 .run-progress li.done .dot { background: var(--success); }
 .run-progress li.error .dot { background: var(--danger); }

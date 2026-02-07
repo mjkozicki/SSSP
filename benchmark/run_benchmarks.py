@@ -84,19 +84,23 @@ def ensure_dataset():
         print(f"Using existing dataset: {GRAPH_PATH}", flush=True)
 
 
-def build_images(build: bool):
+def build_images(build: bool, progress_url=None):
     if not build:
         return
+    _post_progress(progress_url, {"event": "build_started", "languages": LANGUAGES})
     for lang in LANGUAGES:
         df = DOCKERFILES[lang]
         tag = f"sssp-bench-{lang}"
         print(f"Building {tag} ...", flush=True)
+        _post_progress(progress_url, {"event": "building", "language": lang})
         subprocess.run(
             ["docker", "build", "-f", df, "-t", tag, "."],
             cwd=REPO_ROOT,
             check=True,
             capture_output=True,
         )
+        _post_progress(progress_url, {"event": "built", "language": lang})
+    _post_progress(progress_url, {"event": "build_finished"})
 
 
 def run_container_and_collect_stats(image: str, timeout_sec: int = 600):
@@ -209,7 +213,7 @@ def main():
     os.chdir(REPO_ROOT)
     ensure_dataset()
     init_db()
-    build_images(args.build)
+    build_images(args.build, progress_url)
 
     languages = [args.lang] if args.lang else LANGUAGES
     session_id = insert_session(languages)

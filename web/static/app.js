@@ -2,6 +2,7 @@
   const runBtn = document.getElementById("runBtn");
   const runStatus = document.getElementById("runStatus");
   const runProgress = document.getElementById("runProgress");
+  const runProgressHeading = document.getElementById("runProgressHeading");
   const runProgressList = document.getElementById("runProgressList");
   const sessionsBody = document.getElementById("sessionsBody");
   const sessionSelect = document.getElementById("sessionSelect");
@@ -44,16 +45,44 @@
         if (s.error) parts.push("Error");
         if (parts.length) metrics = " <span class=\"metrics\">(" + parts.join(", ") + ")</span>";
       }
+      if (status === "built") metrics = " <span class=\"metrics\">(built)</span>";
       return "<li class=\"" + status + "\" data-lang=\"" + escapeHtml(lang) + "\"><span class=\"dot\"></span>" + escapeHtml(lang) + metrics + "</li>";
     }).join("");
   }
 
   function handleProgressMessage(data) {
+    if (data.event === "build_started") {
+      progressState = {};
+      (data.languages || []).forEach((lang) => {
+        progressState[lang] = { status: "pending" };
+      });
+      runProgressHeading.textContent = "Building images";
+      runProgress.classList.remove("hidden");
+      renderProgressList();
+      return;
+    }
+    if (data.event === "building" && data.language) {
+      if (!progressState[data.language]) progressState[data.language] = {};
+      progressState[data.language].status = "building";
+      renderProgressList();
+      return;
+    }
+    if (data.event === "built" && data.language) {
+      if (!progressState[data.language]) progressState[data.language] = {};
+      progressState[data.language].status = "built";
+      renderProgressList();
+      return;
+    }
+    if (data.event === "build_finished") {
+      runProgressHeading.textContent = "Build complete, starting tests…";
+      return;
+    }
     if (data.event === "suite_started") {
       progressState = {};
       (data.languages || []).forEach((lang) => {
         progressState[lang] = { status: "pending" };
       });
+      runProgressHeading.textContent = "Running tests";
       runProgress.classList.remove("hidden");
       renderProgressList();
       return;
@@ -77,6 +106,7 @@
     if (data.event === "suite_finished") {
       setTimeout(function () {
         runProgress.classList.add("hidden");
+        runProgressHeading.textContent = "Current run";
         progressState = {};
         runProgressList.innerHTML = "";
         refresh();
