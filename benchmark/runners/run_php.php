@@ -27,17 +27,22 @@ fclose($f);
 $algo = strtolower(trim((string) (getenv('SSSP_ALGORITHM') ?: 'duan_mao_shu_yin')));
 $minSec = (float) (getenv('SSSP_MIN_SECONDS') ?: 0);
 $maxSec = (float) (getenv('SSSP_MAX_SECONDS') ?: 30);
+$iterations = 1;
 if ($minSec > 0) {
     $start = microtime(true);
-    $iters = 0;
+    $iterations = 0;
     while ((microtime(true) - $start) < $minSec && (microtime(true) - $start) < $maxSec) {
         $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
-        $iters++;
+        $iterations++;
     }
     $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iters, "\n";
+    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iterations, "\n";
 } else {
     $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
     $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", 1, "\n";
+    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", $iterations, "\n";
+}
+$resultFile = getenv('RESULT_FILE');
+if ($resultFile !== false && $resultFile !== '') {
+    file_put_contents($resultFile, json_encode(['iterations' => $iterations]));
 }

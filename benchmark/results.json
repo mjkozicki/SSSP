@@ -1,123 +1,20 @@
 {
-  "csharp": {
-    "wall_sec": 1.8,
-    "peak_mem_mb": 95.63,
-    "total_cpu_sec": 2.275,
-    "cpu_utilization": [
-      {
-        "elapsed_sec": 1.54,
-        "cpu_pct": 126.36,
-        "mem_mb": 95.63
-      }
-    ],
-    "iterations": null
-  },
-  "rust": {
-    "wall_sec": 1.305,
-    "peak_mem_mb": 0,
-    "total_cpu_sec": 0.0,
-    "cpu_utilization": [],
-    "iterations": null
-  },
-  "cplusplus": {
-    "wall_sec": 1.725,
-    "peak_mem_mb": 5.71,
-    "total_cpu_sec": 1.747,
-    "cpu_utilization": [
-      {
-        "elapsed_sec": 1.54,
-        "cpu_pct": 101.31,
-        "mem_mb": 5.71
-      }
-    ],
-    "iterations": null
-  },
-  "go": {
-    "wall_sec": 1.298,
-    "peak_mem_mb": 0,
-    "total_cpu_sec": 0.0,
-    "cpu_utilization": [],
-    "iterations": null
-  },
-  "java": {
-    "wall_sec": 1.764,
-    "peak_mem_mb": 0.0,
-    "total_cpu_sec": 4.727,
-    "cpu_utilization": [
-      {
-        "elapsed_sec": 1.54,
-        "cpu_pct": 267.96,
-        "mem_mb": 0.0
-      }
-    ],
-    "iterations": null
-  },
   "php": {
-    "wall_sec": 1.413,
-    "peak_mem_mb": 0,
-    "total_cpu_sec": 0.0,
-    "cpu_utilization": [],
-    "iterations": null
-  },
-  "python": {
-    "wall_sec": 1.918,
-    "peak_mem_mb": 35.0,
-    "total_cpu_sec": 1.867,
+    "wall_sec": 5.305,
+    "peak_mem_mb": 50.64,
+    "total_cpu_sec": 2.076,
     "cpu_utilization": [
       {
-        "elapsed_sec": 1.55,
-        "cpu_pct": 97.33,
-        "mem_mb": 35.0
+        "elapsed_sec": 1.54,
+        "cpu_pct": 101.33,
+        "mem_mb": 48.32
+      },
+      {
+        "elapsed_sec": 3.6,
+        "cpu_pct": 100.18,
+        "mem_mb": 50.64
       }
     ],
-    "iterations": null
-  },
-  "typescript": {
-    "wall_sec": 17.224,
-    "peak_mem_mb": 126.5,
-    "total_cpu_sec": 15.481,
-    "cpu_utilization": [
-      {
-        "elapsed_sec": 1.69,
-        "cpu_pct": 104.11,
-        "mem_mb": 126.5
-      },
-      {
-        "elapsed_sec": 3.74,
-        "cpu_pct": 101.4,
-        "mem_mb": 121.5
-      },
-      {
-        "elapsed_sec": 5.79,
-        "cpu_pct": 100.64,
-        "mem_mb": 116.4
-      },
-      {
-        "elapsed_sec": 7.83,
-        "cpu_pct": 100.72,
-        "mem_mb": 113.5
-      },
-      {
-        "elapsed_sec": 9.9,
-        "cpu_pct": 100.25,
-        "mem_mb": 118.4
-      },
-      {
-        "elapsed_sec": 12.91,
-        "cpu_pct": 100.87,
-        "mem_mb": 119.3
-      },
-      {
-        "elapsed_sec": 14.97,
-        "cpu_pct": 100.13,
-        "mem_mb": 122.7
-      },
-      {
-        "elapsed_sec": 17.04,
-        "cpu_pct": 100.14,
-        "mem_mb": 115.4
-      }
-    ],
-    "iterations": null
+    "iterations": 6040
   }
 }

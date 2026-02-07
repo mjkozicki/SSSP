@@ -29,6 +29,9 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "benchmark" / "data"
 GRAPH_PATH = DATA_DIR / "graph.txt"
+# Writable mount for runners to write result JSON (iterations etc.); harness reads from here
+RUN_OUTPUT_DIR = DATA_DIR / "run_output"
+RESULT_FILENAME = "result.json"
 
 LANGUAGES = [
     "csharp",
@@ -155,19 +158,27 @@ def run_container_and_collect_stats(
                     break
                 time.sleep(0.1)
 
-    # Run detached to get container ID, then collect stats and wait
+    # Shared dir for runner to write result.json (iterations etc.); harness reads it after container exits
+    RUN_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    result_file_host = RUN_OUTPUT_DIR / RESULT_FILENAME
+    result_file_container = "/result" + "/" + RESULT_FILENAME
+    if result_file_host.exists():
+        result_file_host.unlink()
+
     cmd = [
         "docker", "run", "-d", "--rm",
         "-v", f"{DATA_DIR}:/data:ro",
+        "-v", f"{RUN_OUTPUT_DIR}:/result",
         "-e", "GRAPH_FILE=/data/graph.txt",
         "-e", f"SSSP_ALGORITHM={algorithm}",
+        "-e", f"RESULT_FILE={result_file_container}",
         image,
         "/data/graph.txt",
     ]
     if min_seconds > 0:
         cmd = cmd[:-2] + ["-e", f"SSSP_MIN_SECONDS={min_seconds}", "-e", f"SSSP_MAX_SECONDS={max_seconds}"] + cmd[-2:]
     else:
-        cmd = cmd[:-2] + ["-e", f"SSSP_MAX_SECONDS={max_seconds}"] + cmd[-2:]  # cap for any timed logic; default 30
+        cmd = cmd[:-2] + ["-e", f"SSSP_MAX_SECONDS={max_seconds}"] + cmd[-2:]
     start_wall = time.perf_counter()
     out = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=30)
     if out.returncode != 0:
@@ -203,36 +214,16 @@ def run_container_and_collect_stats(
         )
         return wall_sec, stats_samples, None, None, f"exit {exit_code}: " + (logs.stderr or logs.stdout or ""), None
 
-    # Parse iterations from container output (timed run: "DONE <vertices> <reachable> <iters>")
-    # Check both stdout and stderr; use last DONE line that has 4+ parts
-    iterations = None
-    logs_out = subprocess.run(
-        ["docker", "logs", cid],
-        capture_output=True, text=True, cwd=REPO_ROOT,
-    )
-    combined = (logs_out.stdout or "") + "\n" + (logs_out.stderr or "")
-    last_done_line = None
-    if combined.strip():
-        for line in reversed(combined.strip().splitlines()):
-            line = line.strip().replace("\r", "")
-            if not line.upper().startswith("DONE "):
-                continue
-            last_done_line = line
-            parts = line.split()
-            if len(parts) >= 4:
-                raw = parts[3].strip().replace("\r", "").replace("\n", "")
-                try:
-                    iterations = int(raw)
-                except ValueError:
-                    digits = "".join(c for c in raw if c.isdigit())
-                    if digits:
-                        iterations = int(digits)
-            else:
-                # 3-part line (DONE vertices reachable): single run = 1 iteration
-                iterations = 1
-            break
-    if min_seconds > 0 and iterations is None and last_done_line is not None:
-        print(f"  [debug] timed run but no iterations parsed; last DONE line: {last_done_line!r}", flush=True)
+    # Read run info from shared mount (runner writes result.json with iterations)
+    iterations = 1
+    if result_file_host.exists():
+        try:
+            with open(result_file_host) as f:
+                data = json.load(f)
+            if isinstance(data.get("iterations"), (int, float)):
+                iterations = int(data["iterations"])
+        except (json.JSONDecodeError, OSError):
+            pass
 
     peak_mem_mb = max((s["mem_mb"] for s in stats_samples), default=0)
     total_cpu_sec = 0.0

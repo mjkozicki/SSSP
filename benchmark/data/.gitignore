@@ -1,3 +1,4 @@
-# Ignore generated graph (large) and SQLite DB; keep .gitkeep
+# Ignore generated graph (large), SQLite DB, and harness run output; keep .gitkeep
 graph.txt
 *.db
+run_output/

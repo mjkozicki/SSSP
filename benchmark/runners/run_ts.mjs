@@ -3,7 +3,7 @@
  * Run from repo root: node benchmark/runners/run_ts.mjs benchmark/data/graph.txt
  * (After building: node --experimental-vm-modules or node with dist)
  */
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const path = process.argv[2] || process.env.GRAPH_FILE || "";
@@ -30,18 +30,23 @@ for (let i = 1; i <= m; i++) {
 const algo = (process.env.SSSP_ALGORITHM || "duan_mao_shu_yin").trim().toLowerCase();
 const minSec = Math.max(0, parseFloat(process.env.SSSP_MIN_SECONDS || "0") || 0);
 const maxSec = Math.max(0, parseFloat(process.env.SSSP_MAX_SECONDS || "30") || 30);
+let iterations = 1;
 if (minSec > 0) {
   const start = performance.now();
-  let iters = 0;
+  iterations = 0;
   let r;
   while ((performance.now() - start) / 1000 < minSec && (performance.now() - start) / 1000 < maxSec) {
     r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
-    iters++;
+    iterations++;
   }
   const reachable = r.distance.filter((d) => isFinite(d)).length;
-  console.log("DONE", r.distance.length, reachable, iters);
+  console.log("DONE", r.distance.length, reachable, iterations);
 } else {
   const r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
   const reachable = r.distance.filter((d) => isFinite(d)).length;
-  console.log("DONE", r.distance.length, reachable, 1);
+  console.log("DONE", r.distance.length, reachable, iterations);
+}
+const resultFile = process.env.RESULT_FILE;
+if (resultFile) {
+  writeFileSync(resultFile, JSON.stringify({ iterations }));
 }

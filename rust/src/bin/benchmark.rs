@@ -48,7 +48,7 @@ fn main() {
         .ok()
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(30.0);
-    if min_sec > 0.0 {
+    let iterations = if min_sec > 0.0 {
         let start = Instant::now();
         let min_dur = std::time::Duration::from_secs_f64(min_sec);
         let max_dur = std::time::Duration::from_secs_f64(max_sec);
@@ -68,6 +68,7 @@ fn main() {
         }
         let reachable = r.distance.iter().filter(|d| d.is_finite()).count();
         println!("DONE {} {} {}", r.vertex_count(), reachable, iters);
+        iters
     } else {
         let r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
             dijkstra(&g, 0)
@@ -76,5 +77,9 @@ fn main() {
         };
         let reachable = r.distance.iter().filter(|d| d.is_finite()).count();
         println!("DONE {} {} 1", r.vertex_count(), reachable);
+        1u64
+    };
+    if let Ok(result_file) = env::var("RESULT_FILE") {
+        let _ = std::fs::write(result_file, format!(r#"{{"iterations":{}}}"#, iterations));
     }
 }

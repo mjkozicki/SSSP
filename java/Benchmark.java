@@ -1,6 +1,7 @@
 package sssp;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 /** Reads graph from file (n m then u v w lines), runs SSSP(0), prints DONE. */
@@ -30,25 +31,32 @@ public final class Benchmark {
             } catch (NumberFormatException ignored) {}
         }
         SsspResult r;
+        int iterations = 1;
         if (minSec > 0) {
             long startNanos = System.nanoTime();
             long minNanos = (long) (minSec * 1_000_000_000);
             long maxNanos = (long) (maxSec * 1_000_000_000);
-            int iters = 0;
+            iterations = 0;
             do {
                 r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
-                iters++;
+                iterations++;
             } while (System.nanoTime() - startNanos < minNanos && System.nanoTime() - startNanos < maxNanos);
             int reachable = 0;
             for (double d : r.getDistance())
                 if (Double.isFinite(d)) reachable++;
-            System.out.println("DONE " + r.vertexCount() + " " + reachable + " " + iters);
+            System.out.println("DONE " + r.vertexCount() + " " + reachable + " " + iterations);
         } else {
             r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
             int reachable = 0;
             for (double d : r.getDistance())
                 if (Double.isFinite(d)) reachable++;
-            System.out.println("DONE " + r.vertexCount() + " " + reachable + " 1");
+            System.out.println("DONE " + r.vertexCount() + " " + reachable + " " + iterations);
+        }
+        String resultFile = System.getenv("RESULT_FILE");
+        if (resultFile != null && !resultFile.isEmpty()) {
+            try {
+                Files.writeString(Path.of(resultFile), "{\"iterations\":" + iterations + "}");
+            } catch (IOException ignored) {}
         }
     }
 

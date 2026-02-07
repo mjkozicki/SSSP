@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Load graph from file, run SSSP(0), print DONE. Path = argv[1] or GRAPH_FILE env."""
+import json
 import os
 import sys
 import time
@@ -32,9 +33,10 @@ def main():
     algo = os.environ.get("SSSP_ALGORITHM", "duan_mao_shu_yin").strip().lower()
     min_sec = float(os.environ.get("SSSP_MIN_SECONDS", "0") or "0")
     max_sec = float(os.environ.get("SSSP_MAX_SECONDS", "30") or "30")
+    iterations = 1
     if min_sec > 0:
         start = time.perf_counter()
-        iters = 0
+        iterations = 0
         while (time.perf_counter() - start) < min_sec:
             if (time.perf_counter() - start) >= max_sec:
                 break
@@ -42,14 +44,18 @@ def main():
                 r = dijkstra(g, 0)
             else:
                 r = duan_mao_shu_yin(g, 0)
-            iters += 1
-        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), iters)
+            iterations += 1
+        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), iterations)
     else:
         if algo == "dijkstra":
             r = dijkstra(g, 0)
         else:
             r = duan_mao_shu_yin(g, 0)
-        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), 1)
+        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), iterations)
+    result_file = os.environ.get("RESULT_FILE")
+    if result_file:
+        with open(result_file, "w") as f:
+            json.dump({"iterations": iterations}, f)
 
 
 if __name__ == "__main__":

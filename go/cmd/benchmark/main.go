@@ -3,6 +3,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -65,16 +66,17 @@ func main() {
 		}
 	}
 	var r *sssp.SsspResult
+	iterations := 1
 	if minSec > 0 {
 		start := time.Now()
-		iters := 0
+		iterations = 0
 		for time.Since(start).Seconds() < minSec && time.Since(start).Seconds() < maxSec {
 			if algo == "dijkstra" {
 				r = sssp.Dijkstra(g, 0)
 			} else {
 				r = sssp.DuanMaoShuYin(g, 0)
 			}
-			iters++
+			iterations++
 		}
 		reachable := 0
 		for _, d := range r.Distance {
@@ -82,7 +84,7 @@ func main() {
 				reachable++
 			}
 		}
-		fmt.Println("DONE", r.VertexCount(), reachable, iters)
+		fmt.Println("DONE", r.VertexCount(), reachable, iterations)
 	} else {
 		if algo == "dijkstra" {
 			r = sssp.Dijkstra(g, 0)
@@ -95,6 +97,10 @@ func main() {
 				reachable++
 			}
 		}
-		fmt.Println("DONE", r.VertexCount(), reachable, 1)
+		fmt.Println("DONE", r.VertexCount(), reachable, iterations)
+	}
+	if resultFile := os.Getenv("RESULT_FILE"); resultFile != "" {
+		out, _ := json.Marshal(map[string]int{"iterations": iterations})
+		os.WriteFile(resultFile, out, 0644)
 	}
 }
