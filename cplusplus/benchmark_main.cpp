@@ -49,6 +49,12 @@ int main(int argc, char** argv) {
   size_t start = 0;
   while (start < algo.size() && (algo[start] == ' ' || algo[start] == '\t')) start++;
   algo = algo.substr(start);
+  size_t fixed_iters = 0;
+  if (const char* it_env = std::getenv("SSSP_ITERATIONS")) {
+    char* end = nullptr;
+    long v = std::strtol(it_env, &end, 10);
+    if (end != it_env && v > 0) fixed_iters = static_cast<size_t>(v);
+  }
   double min_sec = 0.0;
   if (const char* min_env = std::getenv("SSSP_MIN_SECONDS")) {
     char* end = nullptr;
@@ -62,7 +68,17 @@ int main(int argc, char** argv) {
     if (end == max_env || max_sec < 0) max_sec = 30.0;
   }
   size_t iterations = 1;
-  if (min_sec > 0.0) {
+  if (fixed_iters > 0) {
+    sssp::SsspResult r = str_eq_ignore_case(algo, "dijkstra")
+        ? sssp::dijkstra(g, 0)
+        : sssp::duan_mao_shu_yin(g, 0);
+    for (size_t i = 1; i < fixed_iters; i++) {
+      r = str_eq_ignore_case(algo, "dijkstra")
+          ? sssp::dijkstra(g, 0)
+          : sssp::duan_mao_shu_yin(g, 0);
+    }
+    iterations = fixed_iters;
+  } else if (min_sec > 0.0) {
     auto t0 = std::chrono::steady_clock::now();
     std::chrono::duration<double> min_dur(min_sec);
     std::chrono::duration<double> max_dur(max_sec);

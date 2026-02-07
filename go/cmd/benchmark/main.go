@@ -53,6 +53,12 @@ func main() {
 	if algo == "" {
 		algo = "duan_mao_shu_yin"
 	}
+	fixedIters := 0
+	if s := os.Getenv("SSSP_ITERATIONS"); s != "" {
+		if n, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && n > 0 {
+			fixedIters = n
+		}
+	}
 	minSec := 0.0
 	if s := os.Getenv("SSSP_MIN_SECONDS"); s != "" {
 		if f, err := strconv.ParseFloat(strings.TrimSpace(s), 64); err == nil && f > 0 {
@@ -67,7 +73,21 @@ func main() {
 	}
 	var r *sssp.SsspResult
 	iterations := 1
-	if minSec > 0 {
+	if fixedIters > 0 {
+		if algo == "dijkstra" {
+			r = sssp.Dijkstra(g, 0)
+		} else {
+			r = sssp.DuanMaoShuYin(g, 0)
+		}
+		for i := 1; i < fixedIters; i++ {
+			if algo == "dijkstra" {
+				r = sssp.Dijkstra(g, 0)
+			} else {
+				r = sssp.DuanMaoShuYin(g, 0)
+			}
+		}
+		iterations = fixedIters
+	} else if minSec > 0 {
 		start := time.Now()
 		iterations = 0
 		for time.Since(start).Seconds() < minSec && time.Since(start).Seconds() < maxSec {

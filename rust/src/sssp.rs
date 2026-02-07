@@ -3,7 +3,9 @@
 
 use std::cmp::{Ordering, Reverse};
 use std::collections::BinaryHeap;
-use std::collections::HashSet;
+
+use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 
 use crate::graph::Graph;
 
@@ -47,6 +49,7 @@ const EPS: f64 = 1e-12;
 /// Dijkstra's algorithm: O((V+E) log V) SSSP with a min-heap.
 /// Returns the same result type as `duan_mao_shu_yin`.
 /// See https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+#[inline(never)]
 pub fn dijkstra(g: &Graph, source: usize) -> SsspResult {
     let n = g.vertex_count();
     if n == 0 {
@@ -58,7 +61,7 @@ pub fn dijkstra(g: &Graph, source: usize) -> SsspResult {
     let mut d = vec![f64::INFINITY; n];
     let mut pred = vec![None; n];
     d[source] = 0.0;
-    let mut heap: BinaryHeap<Reverse<(F64Ord, usize)>> = BinaryHeap::new();
+    let mut heap: BinaryHeap<Reverse<(F64Ord, usize)>> = BinaryHeap::with_capacity(n.min(4096));
     heap.push(Reverse((F64Ord(0.0), source)));
     while let Some(Reverse((F64Ord(du), u))) = heap.pop() {
         if du > d[u] {
@@ -133,7 +136,7 @@ fn bmssp(
     }
 
     let b0_prime = p.iter().map(|&x| d[x]).min_by(f64_cmp).unwrap_or(b);
-    let mut u_set: HashSet<usize> = HashSet::new();
+    let mut u_set: FxHashSet<usize> = FxHashSet::default();
     let mut last_bi_prime = b0_prime;
     let mut iter = 0usize;
 
@@ -262,7 +265,7 @@ fn find_pivots(
         }
     }
 
-    let in_w: HashSet<usize> = w.iter().copied().collect();
+    let in_w: FxHashSet<usize> = w.iter().copied().collect();
     let mut parent = vec![None; g.vertex_count()];
     for &u in &w {
         for &(v, w_e) in g.out_edges(u) {
@@ -294,7 +297,7 @@ fn find_pivots(
         s
     }
 
-    let has_parent: HashSet<usize> = w.iter().filter(|&&v| parent[v].is_some()).copied().collect();
+    let has_parent: FxHashSet<usize> = w.iter().filter(|&&v| parent[v].is_some()).copied().collect();
     let mut roots_in_s = Vec::new();
     for &r in s {
         if !has_parent.contains(&r) {
@@ -307,6 +310,7 @@ fn find_pivots(
     (roots_in_s, w)
 }
 
+#[inline(always)]
 fn relax(
     d: &mut [f64],
     pred: &mut [Option<usize>],
@@ -315,11 +319,10 @@ fn relax(
     w: f64,
 ) {
     let new_d = d[u] + w;
-    if new_d > d[v] {
-        return;
+    if new_d < d[v] {
+        d[v] = new_d;
+        pred[v] = Some(u);
     }
-    d[v] = new_d;
-    pred[v] = Some(u);
 }
 
 fn pow2(exp: usize) -> usize {
@@ -339,7 +342,7 @@ fn f64_cmp(a: &f64, b: &f64) -> std::cmp::Ordering {
 struct FrontierDS {
     m: usize,
     b: f64,
-    key_to_value: std::collections::HashMap<usize, f64>,
+    key_to_value: FxHashMap<usize, f64>,
     list: Vec<(f64, usize)>,
     sorted: bool,
 }
@@ -349,7 +352,7 @@ impl FrontierDS {
         FrontierDS {
             m: m.max(1),
             b,
-            key_to_value: std::collections::HashMap::new(),
+            key_to_value: FxHashMap::default(),
             list: Vec::new(),
             sorted: true,
         }

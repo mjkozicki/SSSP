@@ -31,25 +31,25 @@ def main():
         sys.exit(1)
     g = load_graph(path)
     algo = os.environ.get("SSSP_ALGORITHM", "duan_mao_shu_yin").strip().lower()
+    fixed_iters = int(os.environ.get("SSSP_ITERATIONS", "0") or "0")
     min_sec = float(os.environ.get("SSSP_MIN_SECONDS", "0") or "0")
     max_sec = float(os.environ.get("SSSP_MAX_SECONDS", "30") or "30")
     iterations = 1
-    if min_sec > 0:
+    if fixed_iters > 0:
+        r = dijkstra(g, 0) if algo == "dijkstra" else duan_mao_shu_yin(g, 0)
+        for _ in range(fixed_iters - 1):
+            r = dijkstra(g, 0) if algo == "dijkstra" else duan_mao_shu_yin(g, 0)
+        iterations = fixed_iters
+    elif min_sec > 0:
         start = time.perf_counter()
         iterations = 0
         while (time.perf_counter() - start) < min_sec:
             if (time.perf_counter() - start) >= max_sec:
                 break
-            if algo == "dijkstra":
-                r = dijkstra(g, 0)
-            else:
-                r = duan_mao_shu_yin(g, 0)
+            r = dijkstra(g, 0) if algo == "dijkstra" else duan_mao_shu_yin(g, 0)
             iterations += 1
     else:
-        if algo == "dijkstra":
-            r = dijkstra(g, 0)
-        else:
-            r = duan_mao_shu_yin(g, 0)
+        r = dijkstra(g, 0) if algo == "dijkstra" else duan_mao_shu_yin(g, 0)
     result_file = os.environ.get("RESULT_FILE")
     if result_file:
         with open(result_file, "w") as f:

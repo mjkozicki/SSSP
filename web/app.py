@@ -128,11 +128,16 @@ def _get_metrics_for_charts():
     return out
 
 
-def _start_harness(progress_url, algorithm="duan_mao_shu_yin", min_seconds=0):
+def _start_harness(progress_url, algorithm="duan_mao_shu_yin", min_seconds=0, iterations=None):
     global _run_process
     if algorithm not in ("dijkstra", "duan_mao_shu_yin"):
         algorithm = "duan_mao_shu_yin"
-    min_seconds = max(0.0, float(min_seconds))
+    try:
+        min_seconds = max(0.0, float(min_seconds))
+    except (TypeError, ValueError):
+        min_seconds = 0
+    if iterations is not None and (not isinstance(iterations, int) or iterations < 1):
+        iterations = None
     with _run_lock:
         if _run_process is not None and _run_process.poll() is None:
             return False
@@ -140,7 +145,9 @@ def _start_harness(progress_url, algorithm="duan_mao_shu_yin", min_seconds=0):
         if progress_url:
             env["PROGRESS_URL"] = progress_url.rstrip("/")
         cmd = [sys.executable, str(REPO_ROOT / "benchmark" / "run_benchmarks.py"), "--build", "--algorithm", algorithm]
-        if min_seconds > 0:
+        if iterations is not None and iterations > 0:
+            cmd.extend(["--iterations", str(iterations)])
+        elif min_seconds > 0:
             cmd.extend(["--min-seconds", str(min_seconds)])
         _run_process = subprocess.Popen(
             cmd,
@@ -265,18 +272,33 @@ def api_run():
     progress_url = None
     algorithm = "duan_mao_shu_yin"
     min_seconds = 0
+    iterations = None
     if request.is_json:
         body = request.get_json(silent=True) or {}
         progress_url = body.get("progressUrl")
         algorithm = body.get("algorithm", algorithm)
         min_seconds = body.get("minSeconds", min_seconds)
+        try:
+            iterations = body.get("iterations")
+            if iterations is None:
+                pass
+            elif isinstance(iterations, (int, float)) and 1 <= int(iterations) <= 10**9:
+                iterations = int(iterations)
+            elif isinstance(iterations, str) and iterations.strip().isdigit():
+                iterations = int(iterations.strip())
+                if iterations < 1:
+                    iterations = None
+            else:
+                iterations = None
+        except (TypeError, ValueError):
+            iterations = None
     if not progress_url and request.referrer:
         from urllib.parse import urlparse
         p = urlparse(request.referrer)
         progress_url = p.scheme + "://" + p.netloc
     if not progress_url:
         progress_url = "http://127.0.0.1:5000"
-    if not _start_harness(progress_url, algorithm, min_seconds):
+    if not _start_harness(progress_url, algorithm, min_seconds, iterations):
         return jsonify({"started": False, "message": "A test suite is already running."}), 409
     return jsonify({"started": True})
 

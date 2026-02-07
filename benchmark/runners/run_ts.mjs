@@ -28,10 +28,17 @@ for (let i = 1; i <= m; i++) {
   g.addEdge(Number(u), Number(v), Number(w));
 }
 const algo = (process.env.SSSP_ALGORITHM || "duan_mao_shu_yin").trim().toLowerCase();
+const fixedIters = Math.max(0, parseInt(process.env.SSSP_ITERATIONS || "0", 10) || 0);
 const minSec = Math.max(0, parseFloat(process.env.SSSP_MIN_SECONDS || "0") || 0);
 const maxSec = Math.max(0, parseFloat(process.env.SSSP_MAX_SECONDS || "30") || 30);
 let iterations = 1;
-if (minSec > 0) {
+if (fixedIters > 0) {
+  let r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
+  for (let i = 1; i < fixedIters; i++) {
+    r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
+  }
+  iterations = fixedIters;
+} else if (minSec > 0) {
   const start = performance.now();
   iterations = 0;
   let r;

@@ -12,5 +12,10 @@ name = "benchmark"
 path = "src/bin/benchmark.rs"
 
 [dependencies]
+rustc-hash = "2.0"
 
 [dev-dependencies]
+
+[profile.release]
+lto = true
+codegen-units = 1

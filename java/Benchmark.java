@@ -16,6 +16,13 @@ public final class Benchmark {
         String algo = System.getenv("SSSP_ALGORITHM");
         if (algo == null) algo = "duan_mao_shu_yin";
         algo = algo.trim().toLowerCase();
+        int fixedIters = 0;
+        String itersEnv = System.getenv("SSSP_ITERATIONS");
+        if (itersEnv != null && !itersEnv.isBlank()) {
+            try {
+                fixedIters = Integer.parseInt(itersEnv.trim());
+            } catch (NumberFormatException ignored) {}
+        }
         double minSec = 0.0;
         String minSecEnv = System.getenv("SSSP_MIN_SECONDS");
         if (minSecEnv != null && !minSecEnv.isBlank()) {
@@ -32,7 +39,12 @@ public final class Benchmark {
         }
         SsspResult r;
         int iterations = 1;
-        if (minSec > 0) {
+        if (fixedIters > 0) {
+            r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
+            for (int i = 1; i < fixedIters; i++)
+                r = "dijkstra".equals(algo) ? Dijkstra.solve(g, 0) : DuanMaoShuYinSSSP.solve(g, 0);
+            iterations = fixedIters;
+        } else if (minSec > 0) {
             long startNanos = System.nanoTime();
             long minNanos = (long) (minSec * 1_000_000_000);
             long maxNanos = (long) (maxSec * 1_000_000_000);

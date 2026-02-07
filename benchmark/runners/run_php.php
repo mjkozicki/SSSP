@@ -25,10 +25,17 @@ for ($i = 0; $i < $m; $i++) {
 fclose($f);
 
 $algo = strtolower(trim((string) (getenv('SSSP_ALGORITHM') ?: 'duan_mao_shu_yin')));
+$fixedIters = (int) (getenv('SSSP_ITERATIONS') ?: 0);
 $minSec = (float) (getenv('SSSP_MIN_SECONDS') ?: 0);
 $maxSec = (float) (getenv('SSSP_MAX_SECONDS') ?: 30);
 $iterations = 1;
-if ($minSec > 0) {
+if ($fixedIters > 0) {
+    $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
+    for ($i = 1; $i < $fixedIters; $i++) {
+        $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
+    }
+    $iterations = $fixedIters;
+} elseif ($minSec > 0) {
     $start = microtime(true);
     $iterations = 0;
     while ((microtime(true) - $start) < $minSec && (microtime(true) - $start) < $maxSec) {

@@ -23,6 +23,7 @@ fn load_graph(path: &Path) -> std::io::Result<Graph> {
         let w: f64 = p.next().unwrap().parse().unwrap();
         g.add_edge(u, v, w);
     }
+    g.compact();
     Ok(g)
 }
 
@@ -40,6 +41,10 @@ fn main() {
         std::process::exit(1);
     });
     let algo = env::var("SSSP_ALGORITHM").unwrap_or_else(|_| "duan_mao_shu_yin".into());
+    let fixed_iters: u64 = env::var("SSSP_ITERATIONS")
+        .ok()
+        .and_then(|s| s.trim().parse().ok())
+        .unwrap_or(0);
     let min_sec: f64 = env::var("SSSP_MIN_SECONDS")
         .ok()
         .and_then(|s| s.trim().parse().ok())
@@ -48,7 +53,21 @@ fn main() {
         .ok()
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(30.0);
-    let iterations = if min_sec > 0.0 {
+    let iterations = if fixed_iters > 0 {
+        let mut r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
+            dijkstra(&g, 0)
+        } else {
+            duan_mao_shu_yin(&g, 0)
+        };
+        for _ in 1..fixed_iters {
+            r = if algo.trim().eq_ignore_ascii_case("dijkstra") {
+                dijkstra(&g, 0)
+            } else {
+                duan_mao_shu_yin(&g, 0)
+            };
+        }
+        fixed_iters
+    } else if min_sec > 0.0 {
         let start = Instant::now();
         let min_dur = std::time::Duration::from_secs_f64(min_sec);
         let max_dur = std::time::Duration::from_secs_f64(max_sec);

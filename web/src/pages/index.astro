@@ -17,6 +17,8 @@ import Layout from '../layouts/Layout.astro';
           <option value="duan_mao_shu_yin">Duan–Mao–Shu–Yin</option>
           <option value="dijkstra">Dijkstra</option>
         </select>
+        <label for="iterationsInput" title="Leave empty for single run or use Timed run">Iteration count</label>
+        <input type="number" id="iterationsInput" min="1" step="1" placeholder="—" aria-label="Fixed number of SSSP iterations per language (overrides Timed run when set)">
         <label class="run-options-check" for="minSecondsCheck">
           <input type="checkbox" id="minSecondsCheck" value="10" aria-label="Run iterations for at least 10 seconds">
           <span>Timed run (≥10 s)</span>
@@ -425,18 +427,19 @@ import Layout from '../layouts/Layout.astro';
     try {
       const progressUrl = window.location.origin;
       const algorithm = algorithmSelect ? algorithmSelect.value : "duan_mao_shu_yin";
+      const iterationsInput = document.getElementById("iterationsInput");
+      const iterationsVal = iterationsInput && iterationsInput.value.trim() ? parseInt(iterationsInput.value, 10) : null;
+      const iterations = (iterationsVal != null && !isNaN(iterationsVal) && iterationsVal > 0) ? iterationsVal : null;
       const minSecondsCheck = document.getElementById("minSecondsCheck");
-      const minSeconds = minSecondsCheck && minSecondsCheck.checked
+      const minSeconds = (iterations == null) && minSecondsCheck && minSecondsCheck.checked
         ? parseFloat(minSecondsCheck.value) || 10
         : 0;
+      const body = { progressUrl: progressUrl, algorithm: algorithm, minSeconds: minSeconds };
+      if (iterations != null) body.iterations = iterations;
       const result = await api("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          progressUrl: progressUrl,
-          algorithm: algorithm,
-          minSeconds: minSeconds
-        })
+        body: JSON.stringify(body)
       });
       if (!result.started) {
         setStatus(result.message || "Could not start.", "error");

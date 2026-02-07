@@ -84,7 +84,8 @@ body {
   font-size: 0.9rem;
 }
 
-.run-section .run-options select {
+.run-section .run-options select,
+.run-section .run-options input[type="number"] {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -92,6 +93,10 @@ body {
   padding: 0.4rem 0.75rem;
   font-size: 0.9rem;
   font-family: inherit;
+}
+
+.run-section .run-options input[type="number"] {
+  width: 6ch;
 }
 
 .run-section .run-options-check {
