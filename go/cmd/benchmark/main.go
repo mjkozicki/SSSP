@@ -95,6 +95,6 @@ func main() {
 				reachable++
 			}
 		}
-		fmt.Println("DONE", r.VertexCount(), reachable)
+		fmt.Println("DONE", r.VertexCount(), reachable, 1)
 	}
 }

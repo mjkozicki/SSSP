@@ -43,5 +43,5 @@ if (minSec > 0) {
 } else {
   const r = algo === "dijkstra" ? dijkstra(g, 0) : duanMaoShuYin(g, 0);
   const reachable = r.distance.filter((d) => isFinite(d)).length;
-  console.log("DONE", r.distance.length, reachable);
+  console.log("DONE", r.distance.length, reachable, 1);
 }

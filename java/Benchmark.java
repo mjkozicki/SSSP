@@ -48,7 +48,7 @@ public final class Benchmark {
             int reachable = 0;
             for (double d : r.getDistance())
                 if (Double.isFinite(d)) reachable++;
-            System.out.println("DONE " + r.vertexCount() + " " + reachable);
+            System.out.println("DONE " + r.vertexCount() + " " + reachable + " 1");
         }
     }
 

@@ -31,7 +31,7 @@ else
 {
     r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
     int reachable = r.Distance.Count(d => double.IsFinite(d));
-    Console.WriteLine($"DONE {r.VertexCount} {reachable}");
+    Console.WriteLine($"DONE {r.VertexCount} {reachable} 1");
 }
 
 static Graph LoadGraph(string path)

@@ -5,6 +5,7 @@ Run from repo root: python web/app.py
 
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -82,7 +83,10 @@ def _get_session_runs(session_id):
             (session_id,),
         )
         rows = cur.fetchall()
-    except Exception:
+    except sqlite3.OperationalError as e:
+        if "iterations" not in str(e).lower() and "no such column" not in str(e).lower():
+            conn.close()
+            raise
         cur = conn.execute(
             """SELECT id, session_id, language, wall_sec, peak_mem_mb, total_cpu_sec, error, created_at
                FROM runs WHERE session_id = ? ORDER BY id""",
@@ -202,12 +206,24 @@ def api_session(session_id):
     conn.close()
     if not row:
         return jsonify({"error": "not found"}), 404
+    # Ensure each run has iterations (int or None) for the UI
+    runs_out = []
+    for r in runs:
+        r = dict(r)
+        if "iterations" not in r:
+            r["iterations"] = None
+        elif r["iterations"] is not None:
+            try:
+                r["iterations"] = int(r["iterations"])
+            except (TypeError, ValueError):
+                r["iterations"] = None
+        runs_out.append(r)
     return jsonify({
         "id": row[0],
         "created_at": row[1],
         "languages": row[2],
         "algorithm": row[3] if len(row) > 3 else "duan_mao_shu_yin",
-        "runs": runs,
+        "runs": runs_out,
     })
 
 

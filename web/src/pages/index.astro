@@ -88,7 +88,7 @@ import Layout from '../layouts/Layout.astro';
               <th>Wall (s)</th>
               <th>Peak mem (MiB)</th>
               <th>CPU (s)</th>
-              <th>Runs</th>
+              <th title="SSSP iterations (timed runs only)">Runs</th>
               <th>Error</th>
             </tr>
           </thead>
@@ -295,7 +295,7 @@ import Layout from '../layouts/Layout.astro';
     const cur = sessionSelect.value;
     sessionSelect.innerHTML = sessions.length
       ? '<option value="">Select session…</option>' + sessions.map((s) =>
-          `<option value="${s.id}">#${s.id} — ${formatDate(s.created_at)} — ${algorithmLabel(s.algorithm || "duan_mao_shu_yin")} (${s.run_count} runs)</option>`
+          `<option value="${s.id}">#${s.id} — ${formatDate(s.created_at)} — ${algorithmLabel(s.algorithm || "duan_mao_shu_yin")} (${s.run_count ?? 0} runs)</option>`
         ).join("")
       : '<option value="">No sessions</option>';
     if (cur) sessionSelect.value = cur;

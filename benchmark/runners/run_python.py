@@ -49,7 +49,7 @@ def main():
             r = dijkstra(g, 0)
         else:
             r = duan_mao_shu_yin(g, 0)
-        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")))
+        print("DONE", r.vertex_count(), sum(1 for d in r.distance if d != float("inf")), 1)
 
 
 if __name__ == "__main__":

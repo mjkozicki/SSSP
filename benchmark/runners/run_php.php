@@ -39,5 +39,5 @@ if ($minSec > 0) {
 } else {
     $r = ($algo === 'dijkstra') ? dijkstra($g, 0) : duan_mao_shu_yin($g, 0);
     $reachable = count(array_filter($r->distance, fn($d) => $d !== INF));
-    echo "DONE ", $r->vertexCount(), " ", $reachable, "\n";
+    echo "DONE ", $r->vertexCount(), " ", $reachable, " ", 1, "\n";
 }

@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         : sssp::duan_mao_shu_yin(g, 0);
     for (double d : r.distance)
       if (std::isfinite(d)) reachable++;
-    std::cout << "DONE " << r.vertex_count() << " " << reachable << "\n";
+    std::cout << "DONE " << r.vertex_count() << " " << reachable << " 1\n";
   }
   return 0;
 }

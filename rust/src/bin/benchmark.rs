@@ -75,6 +75,6 @@ fn main() {
             duan_mao_shu_yin(&g, 0)
         };
         let reachable = r.distance.iter().filter(|d| d.is_finite()).count();
-        println!("DONE {} {}", r.vertex_count(), reachable);
+        println!("DONE {} {} 1", r.vertex_count(), reachable);
     }
 }

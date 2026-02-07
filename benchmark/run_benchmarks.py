@@ -203,23 +203,36 @@ def run_container_and_collect_stats(
         )
         return wall_sec, stats_samples, None, None, f"exit {exit_code}: " + (logs.stderr or logs.stdout or ""), None
 
-    # Parse iterations from container stdout (timed run: "DONE n reachable iters")
+    # Parse iterations from container output (timed run: "DONE <vertices> <reachable> <iters>")
+    # Check both stdout and stderr; use last DONE line that has 4+ parts
     iterations = None
     logs_out = subprocess.run(
         ["docker", "logs", cid],
         capture_output=True, text=True, cwd=REPO_ROOT,
     )
-    if logs_out.stdout:
-        for line in reversed(logs_out.stdout.strip().splitlines()):
-            line = line.strip()
-            if line.upper().startswith("DONE "):
-                parts = line.split()
-                if len(parts) >= 4:
-                    try:
-                        iterations = int(parts[3])
-                    except ValueError:
-                        pass
-                break
+    combined = (logs_out.stdout or "") + "\n" + (logs_out.stderr or "")
+    last_done_line = None
+    if combined.strip():
+        for line in reversed(combined.strip().splitlines()):
+            line = line.strip().replace("\r", "")
+            if not line.upper().startswith("DONE "):
+                continue
+            last_done_line = line
+            parts = line.split()
+            if len(parts) >= 4:
+                raw = parts[3].strip().replace("\r", "").replace("\n", "")
+                try:
+                    iterations = int(raw)
+                except ValueError:
+                    digits = "".join(c for c in raw if c.isdigit())
+                    if digits:
+                        iterations = int(digits)
+            else:
+                # 3-part line (DONE vertices reachable): single run = 1 iteration
+                iterations = 1
+            break
+    if min_seconds > 0 and iterations is None and last_done_line is not None:
+        print(f"  [debug] timed run but no iterations parsed; last DONE line: {last_done_line!r}", flush=True)
 
     peak_mem_mb = max((s["mem_mb"] for s in stats_samples), default=0)
     total_cpu_sec = 0.0
@@ -270,11 +283,11 @@ def main():
         )
         if err:
             print(f"  Error: {err}", flush=True)
-            results[lang] = {"error": err, "wall_sec": wall}
+            results[lang] = {"error": err, "wall_sec": wall, "iterations": None}
             insert_run(session_id, lang, wall, None, None, err, utilization or [], None)
             _post_progress(progress_url, {
                 "event": "completed", "language": lang,
-                "wall_sec": wall, "peak_mem_mb": None, "total_cpu_sec": None, "error": err,
+                "wall_sec": wall, "peak_mem_mb": None, "total_cpu_sec": None, "error": err, "iterations": None,
             })
         else:
             results[lang] = {
@@ -285,9 +298,8 @@ def main():
                 "iterations": iterations,
             }
             insert_run(session_id, lang, wall, peak_mem, total_cpu, None, utilization or [], iterations)
-            msg = f"  wall_sec={results[lang]['wall_sec']} peak_mem_mb={results[lang]['peak_mem_mb']} total_cpu_sec={results[lang]['total_cpu_sec']}"
-            if iterations is not None:
-                msg += f" iterations={iterations}"
+            iters_str = str(iterations) if iterations is not None else "—"
+            msg = f"  wall_sec={results[lang]['wall_sec']} peak_mem_mb={results[lang]['peak_mem_mb']} total_cpu_sec={results[lang]['total_cpu_sec']} iterations={iters_str}"
             print(msg, flush=True)
             _post_progress(progress_url, {
                 "event": "completed", "language": lang,
