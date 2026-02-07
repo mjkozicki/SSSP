@@ -29,7 +29,7 @@ public final class DuanMaoShuYinSSSP {
 
     private static void relax(double[] d, Integer[] pred, int u, int v, double w) {
         double newD = d[u] + w;
-        if (newD > d[v]) return;
+        if (newD >= d[v]) return;
         d[v] = newD;
         pred[v] = u;
     }
@@ -40,12 +40,13 @@ public final class DuanMaoShuYinSSSP {
     }
 
     private static class MinHeap {
-        private final List<double[]> heap = new ArrayList<>();
+        private final List<double[]> heap;
         private final int[] index;
 
         MinHeap(int maxVertex) {
             index = new int[maxVertex];
             Arrays.fill(index, -1);
+            heap = new ArrayList<>(Math.min(maxVertex, 4096));
         }
 
         boolean isEmpty() { return heap.isEmpty(); }
@@ -109,13 +110,16 @@ public final class DuanMaoShuYinSSSP {
     private static class FrontierDS {
         final int m;
         final double b;
-        final Map<Integer, Double> keyToValue = new HashMap<>();
-        final List<double[]> list = new ArrayList<>();
+        final Map<Integer, Double> keyToValue;
+        final List<double[]> list;
         boolean sorted = true;
 
         FrontierDS(int m, double b) {
             this.m = Math.max(m, 1);
             this.b = b;
+            int cap = Math.min(this.m * 2, 64000);
+            keyToValue = new HashMap<>(cap);
+            list = new ArrayList<>(cap);
         }
 
         void insert(int key, double value) {
@@ -196,7 +200,8 @@ public final class DuanMaoShuYinSSSP {
             if (w.size() > k * s.size())
                 return new PW(new ArrayList<>(s), w);
         }
-        Set<Integer> inW = new HashSet<>(w);
+        Set<Integer> inW = new HashSet<>(w.size());
+        inW.addAll(w);
         Integer[] parent = new Integer[g.vertexCount()];
         for (int u : w) {
             for (double[] e : g.outEdges(u)) {
@@ -211,7 +216,7 @@ public final class DuanMaoShuYinSSSP {
         for (int v : w)
             if (parent[v] != null) children.get(parent[v]).add(v);
         int[] subtreeSize = new int[g.vertexCount()];
-        Set<Integer> hasParent = new HashSet<>();
+        Set<Integer> hasParent = new HashSet<>(w.size());
         for (int v : w) if (parent[v] != null) hasParent.add(v);
         List<Integer> rootsInS = new ArrayList<>();
         for (int r : s) {
@@ -264,7 +269,8 @@ public final class DuanMaoShuYinSSSP {
         for (int x : p) ds.insert(x, d[x]);
         double b0Prime = b;
         for (int x : p) if (d[x] < b0Prime) b0Prime = d[x];
-        Set<Integer> uSet = new HashSet<>();
+        int uSetCap = Math.min(k * twoLt, 1_000_000);
+        Set<Integer> uSet = new HashSet<>(uSetCap);
         double lastBiPrime = b0Prime;
         int iter = 0;
         List<Integer> si = new ArrayList<>();
@@ -279,9 +285,12 @@ public final class DuanMaoShuYinSSSP {
             List<Integer> ui = (List<Integer>) rec[1];
             lastBiPrime = biPrime;
             uSet.addAll(ui);
-            List<double[]> kList = new ArrayList<>();
+            int kCap = Math.max(64, ui.size() * 4);
+            List<double[]> kList = new ArrayList<>(kCap);
             for (int u : ui) {
-                for (double[] e : g.outEdges(u)) {
+                List<double[]> adj = g.outEdges(u);
+                for (int i = 0; i < adj.size(); i++) {
+                    double[] e = adj.get(i);
                     int v = (int) e[0];
                     double wE = e[1];
                     double newD = d[u] + wE;

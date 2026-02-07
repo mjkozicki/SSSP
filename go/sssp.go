@@ -52,22 +52,28 @@ func Dijkstra(g *Graph, source int) *SsspResult {
 		pred[i] = -1
 	}
 	d[source] = 0
-	pq := &dijkstraHeap{}
-	heap.Init(pq)
-	heap.Push(pq, struct{ dist float64; v int }{0, source})
+	cap := n
+	if cap > 4096 {
+		cap = 4096
+	}
+	pq := make(dijkstraHeap, 0, cap)
+	heap.Init(&pq)
+	heap.Push(&pq, struct{ dist float64; v int }{0, source})
 	for pq.Len() > 0 {
-		entry := heap.Pop(pq).(struct{ dist float64; v int })
+		entry := heap.Pop(&pq).(struct{ dist float64; v int })
 		du, u := entry.dist, entry.v
 		if du > d[u] {
 			continue
 		}
-		for _, e := range g.OutEdges(u) {
+		edges := g.OutEdges(u)
+		for i := 0; i < len(edges); i++ {
+			e := &edges[i]
 			v, w := e.to, e.weight
 			newD := d[u] + w
 			if newD < d[v] {
 				d[v] = newD
 				pred[v] = u
-				heap.Push(pq, struct{ dist float64; v int }{newD, v})
+				heap.Push(&pq, struct{ dist float64; v int }{newD, v})
 			}
 		}
 	}
@@ -119,7 +125,11 @@ func bmssp(g *Graph, d []float64, pred []int, l int, b float64, s []int, n, k, t
 		}
 	}
 
-	uSet := make(map[int]struct{})
+	uSetCap := k * twoLt
+	if uSetCap > 1_000_000 {
+		uSetCap = 1_000_000
+	}
+	uSet := make(map[int]struct{}, uSetCap)
 	lastBiPrime := b0Prime
 	iter := 0
 
@@ -135,10 +145,16 @@ func bmssp(g *Graph, d []float64, pred []int, l int, b float64, s []int, n, k, t
 			uSet[u] = struct{}{}
 		}
 
-		kListV := []int{}
-		kListD := []float64{}
+		kCap := 64
+		if len(ui)*4 > kCap {
+			kCap = len(ui) * 4
+		}
+		kListV := make([]int, 0, kCap)
+		kListD := make([]float64, 0, kCap)
 		for _, u := range ui {
-			for _, e := range g.OutEdges(u) {
+			edges := g.OutEdges(u)
+			for i := 0; i < len(edges); i++ {
+				e := &edges[i]
 				newD := d[u] + e.weight
 				if newD > d[e.to] {
 					continue
@@ -246,7 +262,7 @@ func findPivots(g *Graph, d []float64, pred []int, b float64, s []int, k int) (p
 		}
 	}
 
-	inW := make(map[int]struct{})
+	inW := make(map[int]struct{}, len(w))
 	for _, v := range w {
 		inW[v] = struct{}{}
 	}
@@ -285,7 +301,7 @@ func findPivots(g *Graph, d []float64, pred []int, b float64, s []int, k int) (p
 		return s
 	}
 
-	hasParent := make(map[int]struct{})
+	hasParent := make(map[int]struct{}, len(w))
 	for _, v := range w {
 		if parent[v] >= 0 {
 			hasParent[v] = struct{}{}
@@ -304,7 +320,7 @@ func findPivots(g *Graph, d []float64, pred []int, b float64, s []int, k int) (p
 
 func relax(d []float64, pred []int, u, v int, w float64) {
 	newD := d[u] + w
-	if newD > d[v] {
+	if newD >= d[v] {
 		return
 	}
 	d[v] = newD
@@ -349,10 +365,15 @@ func newFrontierDS(m int, b float64) *frontierDS {
 	if m < 1 {
 		m = 1
 	}
+	cap := m * 2
+	if cap > 64000 {
+		cap = 64000
+	}
 	return &frontierDS{
 		m:          m,
 		b:          b,
-		keyToValue: make(map[int]float64),
+		keyToValue: make(map[int]float64, cap),
+		list:       make([]struct{ v float64; k int }, 0, cap),
 	}
 }
 
@@ -436,7 +457,12 @@ func newMinHeap(maxVertex int) *minHeap {
 	for i := range idx {
 		idx[i] = -1
 	}
+	heapCap := maxVertex
+	if heapCap > 4096 {
+		heapCap = 4096
+	}
 	return &minHeap{
+		heap:  make([]struct{ v int; d float64 }, 0, heapCap),
 		index: idx,
 	}
 }

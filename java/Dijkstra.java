@@ -19,14 +19,17 @@ public final class Dijkstra {
         Arrays.fill(d, Double.POSITIVE_INFINITY);
         d[source] = 0;
 
-        PriorityQueue<VertexDist> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a.dist));
+        int cap = Math.min(n, 4096);
+        PriorityQueue<VertexDist> pq = new PriorityQueue<>(cap, Comparator.comparingDouble(a -> a.dist));
         pq.add(new VertexDist(0.0, source));
         while (!pq.isEmpty()) {
             VertexDist cur = pq.poll();
             double du = cur.dist;
             int u = cur.v;
             if (du > d[u]) continue;
-            for (double[] e : g.outEdges(u)) {
+            List<double[]> adj = g.outEdges(u);
+            for (int i = 0; i < adj.size(); i++) {
+                double[] e = adj.get(i);
                 int v = (int) e[0];
                 double w = e[1];
                 double newD = d[u] + w;

@@ -22,10 +22,10 @@ size_t Pow2(size_t exp) {
   return size_t(1) << std::min(exp, size_t(30));
 }
 
-void Relax(std::vector<double>& d, std::vector<std::optional<size_t>>& pred,
-           size_t u, size_t v, double w) {
+inline void Relax(std::vector<double>& d, std::vector<std::optional<size_t>>& pred,
+                  size_t u, size_t v, double w) {
   double new_d = d[u] + w;
-  if (new_d > d[v]) return;
+  if (new_d >= d[v]) return;
   d[v] = new_d;
   pred[v] = u;
 }
@@ -40,7 +40,9 @@ int F64Cmp(double a, double b) {
 class MinHeap {
  public:
   explicit MinHeap(size_t max_vertex)
-      : index_(max_vertex, static_cast<size_t>(-1)) {}
+      : index_(max_vertex, static_cast<size_t>(-1)) {
+    heap_.reserve(std::min(max_vertex, size_t(4096)));
+  }
 
   bool is_empty() const { return heap_.empty(); }
   bool contains(size_t v) const {
@@ -109,7 +111,11 @@ class MinHeap {
 // --- FrontierDS ---
 class FrontierDS {
  public:
-  FrontierDS(size_t m, double b) : m_(std::max(m, size_t(1))), b_(b) {}
+  FrontierDS(size_t m, double b) : m_(std::max(m, size_t(1))), b_(b) {
+    size_t cap = std::min(m * 2, size_t(64000));
+    key_to_value_.reserve(cap);
+    list_.reserve(cap);
+  }
 
   void insert(size_t key, double value) {
     auto it = key_to_value_.find(key);
@@ -125,7 +131,9 @@ class FrontierDS {
   }
 
   void batch_prepend(const std::vector<std::pair<size_t, double>>& pairs) {
-    for (const auto& [key, value] : pairs) {
+    for (const auto& kv : pairs) {
+      size_t key = kv.first;
+      double value = kv.second;
       auto it = key_to_value_.find(key);
       if (it != key_to_value_.end() && value >= it->second) continue;
       list_.erase(std::remove_if(list_.begin(), list_.end(),
@@ -201,7 +209,9 @@ std::pair<std::vector<size_t>, std::vector<size_t>> find_pivots(
     if (w.size() > k * s.size()) return {s, w};
   }
 
-  std::unordered_set<size_t> in_w(w.begin(), w.end());
+  std::unordered_set<size_t> in_w;
+  in_w.reserve(w.size());
+  for (size_t x : w) in_w.insert(x);
   std::vector<std::optional<size_t>> parent(g.vertex_count());
   for (size_t u : w) {
     for (const auto& [v, w_e] : g.out_edges(u)) {
@@ -218,6 +228,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> find_pivots(
 
   std::vector<size_t> subtree_size(g.vertex_count(), 0);
   std::unordered_set<size_t> has_parent;
+  has_parent.reserve(w.size());
   for (size_t v : w)
     if (parent[v]) has_parent.insert(v);
 
@@ -281,6 +292,7 @@ std::pair<double, std::vector<size_t>> bmssp(
     if (d[x] < b0_prime) b0_prime = d[x];
 
   std::unordered_set<size_t> u_set;
+  u_set.reserve(std::min(k * two_lt, size_t(1000000)));
   double last_bi_prime = b0_prime;
   size_t iter = 0;
 
@@ -294,8 +306,12 @@ std::pair<double, std::vector<size_t>> bmssp(
     for (size_t u : ui) u_set.insert(u);
 
     std::vector<std::pair<size_t, double>> k_list;
+    k_list.reserve(std::max(size_t(64), ui.size() * 4));
     for (size_t u : ui) {
-      for (const auto& [v, w_e] : g.out_edges(u)) {
+      OutEdgesView edges = g.out_edges(u);
+      for (size_t ei = 0; ei < edges.size(); ++ei) {
+        size_t v = edges.begin()[ei].first;
+        double w_e = edges.begin()[ei].second;
         double new_d = d[u] + w_e;
         if (new_d > d[v]) continue;
         Relax(d, pred, u, v, w_e);

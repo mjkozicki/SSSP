@@ -32,6 +32,7 @@ func loadGraph(path string) (*sssp.Graph, error) {
 		w, _ := strconv.ParseFloat(parts[2], 64)
 		g.AddEdge(u, v, w)
 	}
+	g.Compact()
 	return g, sc.Err()
 }
 

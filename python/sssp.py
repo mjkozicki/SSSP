@@ -26,7 +26,9 @@ def dijkstra(g: Graph, source: int) -> SsspResult:
         du, u = heapq.heappop(heap)
         if du > dist[u]:
             continue
-        for v, w in g.out_edges(u):
+        adj = g.out_edges(u)
+        for i in range(len(adj)):
+            v, w = adj[i]
             new_d = dist[u] + w
             if new_d < dist[v]:
                 dist[v] = new_d
@@ -66,7 +68,7 @@ def duan_mao_shu_yin(g: Graph, source: int) -> SsspResult:
 
 def _relax(d: list[float], pred: list[Optional[int]], u: int, v: int, w: float) -> None:
     new_d = d[u] + w
-    if new_d > d[v]:
+    if new_d >= d[v]:
         return
     d[v] = new_d
     pred[v] = u
@@ -305,7 +307,9 @@ def bmssp(
 
         k_list: list[tuple[int, float]] = []
         for u in ui:
-            for v, w_e in g.out_edges(u):
+            adj = g.out_edges(u)
+            for i in range(len(adj)):
+                v, w_e = adj[i]
                 new_d = d[u] + w_e
                 if new_d > d[v]:
                     continue

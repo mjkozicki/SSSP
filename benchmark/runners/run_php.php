@@ -23,6 +23,7 @@ for ($i = 0; $i < $m; $i++) {
     $g->addEdge((int)$u, (int)$v, (float)$w);
 }
 fclose($f);
+$g->compact();
 
 $algo = strtolower(trim((string) (getenv('SSSP_ALGORITHM') ?: 'duan_mao_shu_yin')));
 $fixedIters = (int) (getenv('SSSP_ITERATIONS') ?: 0);

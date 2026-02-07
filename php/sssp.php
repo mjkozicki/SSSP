@@ -14,6 +14,11 @@ class Graph {
     /** @var list<list<array{0: int, 1: float}>> */
     private array $outEdges = [];
     private int $edgeCount = 0;
+    private bool $compact = false;
+    /** @var list<array{0: int, 1: float}> flat after compact */
+    private array $edges = [];
+    /** @var list<int> length vertexCount+1 after compact */
+    private array $offsets = [];
 
     public function __construct(int $vertexCount) {
         $this->outEdges = array_fill(0, $vertexCount, []);
@@ -27,15 +32,71 @@ class Graph {
         return $this->edgeCount;
     }
 
+    /** No-op after compact(). */
     public function addEdge(int $from, int $to, float $weight): void {
+        if ($this->compact) return;
         if ($weight < 0) throw new InvalidArgumentException('edge weights must be non-negative');
         $this->outEdges[$from][] = [$to, $weight];
         $this->edgeCount++;
     }
 
-    /** @return list<array{0: int, 1: float}> */
-    public function outEdges(int $u): array {
+    /** Builds a single flat edge array for better cache locality. Call once after adding all edges. */
+    public function compact(): void {
+        if ($this->compact) return;
+        $n = $this->vertexCount();
+        $this->offsets = [0];
+        for ($u = 0; $u < $n; $u++) {
+            $this->offsets[] = $this->offsets[$u] + count($this->outEdges[$u]);
+        }
+        $this->edges = [];
+        for ($u = 0; $u < $n; $u++) {
+            foreach ($this->outEdges[$u] as $e) {
+                $this->edges[] = $e;
+            }
+        }
+        $this->compact = true;
+    }
+
+    /** @return list<array{0: int, 1: float}>|EdgeList */
+    public function outEdges(int $u) {
+        if ($this->compact) {
+            return new EdgeList($this->edges, $this->offsets[$u], $this->offsets[$u + 1] - $this->offsets[$u]);
+        }
         return $this->outEdges[$u];
+    }
+}
+
+/** Zero-copy view over a slice of edges. Supports count(), foreach, and indexed access. */
+class EdgeList implements \Countable, \ArrayAccess, \IteratorAggregate {
+    private array $edges;
+    private int $start;
+    private int $count;
+
+    public function __construct(array &$edges, int $start, int $count) {
+        $this->edges = &$edges;
+        $this->start = $start;
+        $this->count = $count;
+    }
+
+    public function count(): int {
+        return $this->count;
+    }
+
+    public function offsetExists($offset): bool {
+        return is_int($offset) && $offset >= 0 && $offset < $this->count;
+    }
+
+    public function offsetGet($offset): array {
+        return $this->edges[$this->start + $offset];
+    }
+
+    public function offsetSet($offset, $value): void {}
+    public function offsetUnset($offset): void {}
+
+    public function getIterator(): \Generator {
+        for ($i = 0; $i < $this->count; $i++) {
+            yield $this->edges[$this->start + $i];
+        }
     }
 }
 
@@ -76,8 +137,12 @@ function dijkstra(Graph $g, int $source): SsspResult {
         $u = $elem['data'];
         $du = -$elem['priority'];
         if ($du > $d[$u]) continue;
-        foreach ($g->outEdges($u) as $e) {
-            [$v, $w] = $e;
+        $adj = $g->outEdges($u);
+        $deg = count($adj);
+        for ($i = 0; $i < $deg; $i++) {
+            $e = $adj[$i];
+            $v = $e[0];
+            $w = $e[1];
             $newD = $d[$u] + $w;
             if ($newD < $d[$v]) {
                 $d[$v] = $newD;
@@ -110,7 +175,7 @@ function duan_mao_shu_yin(Graph $g, int $source): SsspResult {
 
 function relax(array &$d, array &$pred, int $u, int $v, float $w): void {
     $newD = $d[$u] + $w;
-    if ($newD > $d[$v]) return;
+    if ($newD >= $d[$v]) return;
     $d[$v] = $newD;
     $pred[$v] = $u;
 }
@@ -147,8 +212,12 @@ function bmssp(Graph $g, array &$d, array &$pred, int $l, float $b, array $s, in
 
         $kList = [];
         foreach ($ui as $u) {
-            foreach ($g->outEdges($u) as $e) {
-                [$v, $wE] = $e;
+            $adj = $g->outEdges($u);
+            $deg = count($adj);
+            for ($i = 0; $i < $deg; $i++) {
+                $e = $adj[$i];
+                $v = $e[0];
+                $wE = $e[1];
                 $newD = $d[$u] + $wE;
                 if ($newD > $d[$v]) continue;
                 relax($d, $pred, $u, $v, $wE);

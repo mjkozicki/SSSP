@@ -35,14 +35,14 @@ RUN_OUTPUT_DIR = DATA_DIR / "run_output"
 RESULT_FILENAME = "result.json"
 
 LANGUAGES = [
-    # "csharp",
+    "csharp",
     "rust",
-    # "cplusplus",
-    # "go",
-    # "java",
-    # "php",
-    # "python",
-    # "typescript",
+    "cplusplus",
+    "go",
+    "java",
+    "php",
+    "python",
+    "typescript",
 ]
 
 # Dockerfile paths relative to repo root

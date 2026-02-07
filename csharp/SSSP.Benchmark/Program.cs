@@ -53,5 +53,6 @@ static Graph LoadGraph(string path)
         var line = f.ReadLine()!.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         g.AddEdge(int.Parse(line[0]), int.Parse(line[1]), double.Parse(line[2]));
     }
+    g.Compact();
     return g;
 }

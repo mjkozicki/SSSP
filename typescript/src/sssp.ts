@@ -58,7 +58,9 @@ export function dijkstra(g: Graph, source: number): SsspResult {
     const top = pop()!;
     const [du, u] = top;
     if (du > d[u]) continue;
-    for (const [v, w] of g.outEdges(u)) {
+    const adj = g.outEdges(u);
+    for (let i = 0; i < adj.length; i++) {
+      const [v, w] = adj[i];
       const newD = d[u] + w;
       if (newD < d[v]) {
         d[v] = newD;
@@ -91,7 +93,7 @@ export function duanMaoShuYin(g: Graph, source: number): SsspResult {
 
 function relax(d: number[], pred: (number | null)[], u: number, v: number, w: number): void {
   const newD = d[u] + w;
-  if (newD > d[v]) return;
+  if (newD >= d[v]) return;
   d[v] = newD;
   pred[v] = u;
 }
@@ -348,7 +350,9 @@ function bmssp(
 
     const kList: [number, number][] = [];
     for (const u of ui) {
-      for (const [v, wE] of g.outEdges(u)) {
+      const adj = g.outEdges(u);
+      for (let i = 0; i < adj.length; i++) {
+        const [v, wE] = adj[i];
         const newD = d[u] + wE;
         if (newD > d[v]) continue;
         relax(d, pred, u, v, wE);

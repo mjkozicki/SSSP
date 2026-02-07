@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace SSSP;
 
 /// <summary>
@@ -51,7 +53,8 @@ public static class DuanMaoShuYinSSSP
             D.Insert(x, d[x]);
 
         double B0Prime = P.Length > 0 ? P.Min(x => d[x]) : B;
-        var USet = new HashSet<int>();
+        int usetCap = Math.Min(k * twoLt, 1_000_000);
+        var USet = new HashSet<int>(usetCap);
         double lastBiPrime = B0Prime;
         int iter = 0;
         const int maxIter = 100_000_000; // guard
@@ -63,11 +66,14 @@ public static class DuanMaoShuYinSSSP
             lastBiPrime = BiPrime;
             foreach (int u in Ui) USet.Add(u);
 
-            var K = new List<(int key, double value)>();
+            int kCap = Math.Max(64, Ui.Count * 4);
+            var K = new List<(int key, double value)>(kCap);
             foreach (int u in Ui)
             {
-                foreach (var (v, w) in g.GetOutEdges(u))
+                var edges = g.GetOutEdges(u);
+                for (int ei = 0; ei < edges.Count; ei++)
                 {
+                    var (v, w) = edges[ei];
                     double newD = d[u] + w;
                     if (newD > d[v]) continue;
                     Relax(d, pred, u, v, w);
@@ -148,7 +154,8 @@ public static class DuanMaoShuYinSSSP
                 return (S, W);
         }
 
-        var inW = new HashSet<int>(W);
+        var inW = new HashSet<int>(W.Count);
+        foreach (int x in W) inW.Add(x);
         var parent = new int[g.VertexCount];
         Array.Fill(parent, -1);
         foreach (int u in W)
@@ -174,7 +181,7 @@ public static class DuanMaoShuYinSSSP
         }
 
         var rootsInS = new List<int>();
-        var hasParent = new HashSet<int>();
+        var hasParent = new HashSet<int>(W.Count);
         foreach (int v in W) if (parent[v] >= 0) hasParent.Add(v);
         foreach (int r in S)
             if (!hasParent.Contains(r))
@@ -185,10 +192,11 @@ public static class DuanMaoShuYinSSSP
         return (rootsInS.ToArray(), W);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool Relax(double[] d, int[] pred, int u, int v, double w)
     {
         double newD = d[u] + w;
-        if (newD > d[v]) return false;
+        if (newD >= d[v]) return false;
         d[v] = newD;
         pred[v] = u;
         return true;
@@ -201,8 +209,8 @@ public static class DuanMaoShuYinSSSP
     {
         private readonly int _m;
         private readonly double _B;
-        private readonly Dictionary<int, double> _keyToValue = new();
-        private readonly List<(double value, int key)> _list = new();
+        private readonly Dictionary<int, double> _keyToValue;
+        private readonly List<(double value, int key)> _list;
         private bool _sorted = true;
         private double _lastPullBound = double.PositiveInfinity;
 
@@ -210,6 +218,8 @@ public static class DuanMaoShuYinSSSP
         {
             _m = Math.Max(1, m);
             _B = b;
+            _keyToValue = new Dictionary<int, double>(Math.Min(m * 2, 64_000));
+            _list = new List<(double value, int key)>(Math.Min(m * 2, 64_000));
         }
 
         public void Insert(int key, double value)
@@ -276,13 +286,14 @@ public static class DuanMaoShuYinSSSP
 /// <summary>Binary min-heap for (vertex, distance) with DecreaseKey.</summary>
 internal sealed class MinHeap
 {
-    private readonly List<(int v, double d)> _heap = new();
+    private readonly List<(int v, double d)> _heap;
     private readonly int[] _index; // vertex -> index in _heap, or -1
 
     public MinHeap(int maxVertex)
     {
         _index = new int[maxVertex];
         Array.Fill(_index, -1);
+        _heap = new List<(int v, double d)>(Math.Min(maxVertex, 4096));
     }
 
     public bool IsEmpty => _heap.Count == 0;

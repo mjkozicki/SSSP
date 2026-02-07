@@ -70,6 +70,7 @@ public final class Benchmark {
             Graph g = new Graph(n);
             for (int i = 0; i < m; i++)
                 g.addEdge(sc.nextInt(), sc.nextInt(), sc.nextDouble());
+            g.compact();
             return g;
         }
     }

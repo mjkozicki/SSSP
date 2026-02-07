@@ -21,6 +21,7 @@ def load_graph(path: str) -> Graph:
         for _ in range(m):
             u, v, w = f.readline().split()
             g.add_edge(int(u), int(v), float(w))
+    g.compact()
     return g
 
 

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace SSSP;
 
 /// <summary>
@@ -8,6 +10,7 @@ namespace SSSP;
 public static class Dijkstra
 {
     /// <summary>Runs SSSP from source; returns distances and predecessors (-1 for source/unreachable).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static SSSPResult Solve(Graph g, int source)
     {
         int n = g.VertexCount;
@@ -22,14 +25,17 @@ public static class Dijkstra
         }
         dist[source] = 0;
 
-        var pq = new PriorityQueue<int, double>();
+        int capacity = Math.Min(n, 4096);
+        var pq = new PriorityQueue<int, double>(capacity);
         pq.Enqueue(source, 0);
         while (pq.Count > 0)
         {
             pq.TryDequeue(out int u, out double du);
             if (du > dist[u]) continue;
-            foreach (var (v, w) in g.GetOutEdges(u))
+            var edges = g.GetOutEdges(u);
+            for (int i = 0; i < edges.Count; i++)
             {
+                var (v, w) = edges[i];
                 double newD = dist[u] + w;
                 if (newD < dist[v])
                 {

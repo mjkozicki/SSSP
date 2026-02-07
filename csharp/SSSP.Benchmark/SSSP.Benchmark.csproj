@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>benchmark</AssemblyName>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>

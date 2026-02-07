@@ -27,6 +27,7 @@ for (let i = 1; i <= m; i++) {
   const [u, v, w] = lines[i].split(" ");
   g.addEdge(Number(u), Number(v), Number(w));
 }
+g.compact();
 const algo = (process.env.SSSP_ALGORITHM || "duan_mao_shu_yin").trim().toLowerCase();
 const fixedIters = Math.max(0, parseInt(process.env.SSSP_ITERATIONS || "0", 10) || 0);
 const minSec = Math.max(0, parseFloat(process.env.SSSP_MIN_SECONDS || "0") || 0);

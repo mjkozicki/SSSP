@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
     f >> u >> v >> w;
     g.add_edge(u, v, w);
   }
+  g.compact();
   const char* algo_env = std::getenv("SSSP_ALGORITHM");
   std::string algo(algo_env ? algo_env : "duan_mao_shu_yin");
   while (!algo.empty() && (algo.back() == ' ' || algo.back() == '\t')) algo.pop_back();
