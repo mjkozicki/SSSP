@@ -31,6 +31,10 @@ Based on the paper:
 ```
 SSSP/
 ├── README.md
+├── LICENSE
+├── .gitignore
+├── benchmark/       # Benchmark harness, Dockerfiles, dataset, SQLite results
+├── web/             # Web UI to run benchmarks and view history/charts
 ├── csharp/          # C# library (.NET 8)
 ├── rust/            # Rust library
 ├── cplusplus/       # C++17 library + test
@@ -109,13 +113,14 @@ Each language folder contains:
 
 ### Java (`java/`)
 
-- **Files:** `Graph.java`, `SsspResult.java`, `DuanMaoShuYinSSSP.java`, `Main.java`  
+- **Files:** `Graph.java`, `SsspResult.java`, `DuanMaoShuYinSSSP.java`, `Main.java`, `Benchmark.java` (benchmark entrypoint).  
 - **API:** `DuanMaoShuYinSSSP.solve(Graph g, int source)` → `SsspResult` with `getDistance()`, `getPredecessor()` (Integer; null for source/unreachable).  
 - **Build & run:**
   ```bash
   cd java
-  javac -d out sssp/*.java
+  mkdir -p out && javac -d out *.java
   java -cp out sssp.Main
+  # Or run benchmark: java -cp out sssp.Benchmark /path/to/graph.txt
   ```
 
 ---
@@ -176,3 +181,10 @@ Typical usage:
 - **Paper:** Duan, Mao, Mao, Shu, Yin — *Breaking the Sorting Barrier for Directed Single-Source Shortest Paths*, [arXiv:2504.17033v2](https://arxiv.org/html/2504.17033v2).  
 - **Model:** Comparison-addition model; constant-degree assumption in the paper (general graphs can be reduced).  
 - **Note:** Implementations use a simplified frontier data structure that preserves correctness; the paper’s full block-based structure (Lemma 3.3) can be used for tighter complexity constants.
+
+---
+
+## Benchmark and Web UI
+
+- **Benchmark:** From repo root, run `python benchmark/run_benchmarks.py [--build]` to run all language implementations in Docker and record wall time, peak memory, and CPU. Results are stored in `benchmark/data/benchmark.db` (SQLite) and optionally `benchmark/results.json`. See **benchmark/README.md** for dataset, images, and results format.
+- **Web UI:** Run `python web/app.py` from repo root, then open the URL printed in the console. Use the UI to start the test suite (with optional image build), watch per-language progress, view historical runs, and inspect charts and results. See **web/README.md** for setup and features.

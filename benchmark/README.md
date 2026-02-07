@@ -55,8 +55,8 @@ python benchmark/run_benchmarks.py --lang rust --output benchmark/results.json
 **Requirements:** Docker, Python 3. The harness will:
 
 1. Ensure `benchmark/data/graph.txt` exists (run `generate_dataset.py` if not).
-2. Optionally build each `sssp-bench-<lang>` image (if `--build`).
-3. For each language: run `docker run -d -v benchmark/data:/data:ro ... sssp-bench-<lang> /data/graph.txt`, sample `docker stats` every 0.5s, then `docker wait`.
+2. Optionally build each `sssp-bench-<lang>` image (if `--build`); when started from the **web UI** with progress URL set, the UI receives live “building” / “built” events per language.
+3. For each language: run `docker run -d -v benchmark/data:/data:ro ... sssp-bench-<lang> /data/graph.txt`, sample `docker stats` every 0.5s, then `docker wait`. If `PROGRESS_URL` is set (e.g. when started from the web UI), the harness POSTs “started” / “completed” per language so the UI can show live run progress.
 4. Store results in **benchmark/data/benchmark.db** (SQLite) and optionally write **benchmark/results.json** (use `--no-json` to skip JSON).
    - `wall_sec` — wall clock time
    - `peak_mem_mb` — peak memory (MiB)
