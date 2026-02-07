@@ -1,6 +1,8 @@
 (function () {
   const runBtn = document.getElementById("runBtn");
   const runStatus = document.getElementById("runStatus");
+  const runProgress = document.getElementById("runProgress");
+  const runProgressList = document.getElementById("runProgressList");
   const sessionsBody = document.getElementById("sessionsBody");
   const sessionSelect = document.getElementById("sessionSelect");
   const runsBody = document.getElementById("runsBody");
@@ -17,6 +19,87 @@
     runStatus.textContent = text;
     runStatus.className = "status" + (className ? " " + className : "");
   }
+
+  function getWsUrl() {
+    const scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return scheme + "//" + window.location.host + "/ws";
+  }
+
+  var progressState = {}; // language -> { status, wall_sec, peak_mem_mb, total_cpu_sec, error }
+
+  function renderProgressList() {
+    const langs = Object.keys(progressState).sort();
+    if (langs.length === 0) {
+      runProgressList.innerHTML = "";
+      return;
+    }
+    runProgressList.innerHTML = langs.map((lang) => {
+      const s = progressState[lang];
+      const status = s.status || "pending";
+      let metrics = "";
+      if (status === "done" || status === "error") {
+        const parts = [];
+        if (s.wall_sec != null) parts.push(s.wall_sec.toFixed(2) + "s");
+        if (s.peak_mem_mb != null) parts.push(s.peak_mem_mb.toFixed(0) + " MiB");
+        if (s.error) parts.push("Error");
+        if (parts.length) metrics = " <span class=\"metrics\">(" + parts.join(", ") + ")</span>";
+      }
+      return "<li class=\"" + status + "\" data-lang=\"" + escapeHtml(lang) + "\"><span class=\"dot\"></span>" + escapeHtml(lang) + metrics + "</li>";
+    }).join("");
+  }
+
+  function handleProgressMessage(data) {
+    if (data.event === "suite_started") {
+      progressState = {};
+      (data.languages || []).forEach((lang) => {
+        progressState[lang] = { status: "pending" };
+      });
+      runProgress.classList.remove("hidden");
+      renderProgressList();
+      return;
+    }
+    if (data.event === "started" && data.language) {
+      if (!progressState[data.language]) progressState[data.language] = {};
+      progressState[data.language].status = "running";
+      renderProgressList();
+      return;
+    }
+    if (data.event === "completed" && data.language) {
+      if (!progressState[data.language]) progressState[data.language] = {};
+      progressState[data.language].status = data.error ? "error" : "done";
+      progressState[data.language].wall_sec = data.wall_sec;
+      progressState[data.language].peak_mem_mb = data.peak_mem_mb;
+      progressState[data.language].total_cpu_sec = data.total_cpu_sec;
+      progressState[data.language].error = data.error;
+      renderProgressList();
+      return;
+    }
+    if (data.event === "suite_finished") {
+      setTimeout(function () {
+        runProgress.classList.add("hidden");
+        progressState = {};
+        runProgressList.innerHTML = "";
+        refresh();
+      }, 1500);
+    }
+  }
+
+  function connectWs() {
+    const ws = new WebSocket(getWsUrl());
+    ws.onmessage = function (ev) {
+      try {
+        const data = JSON.parse(ev.data);
+        handleProgressMessage(data);
+      } catch (e) {}
+    };
+    ws.onclose = function () {
+      setTimeout(connectWs, 3000);
+    };
+    ws.onerror = function () {
+      ws.close();
+    };
+  }
+  connectWs();
 
   async function api(path, options = {}) {
     const res = await fetch(path, options);
@@ -199,7 +282,12 @@
 
   runBtn.addEventListener("click", async () => {
     try {
-      const result = await api("/api/run", { method: "POST" });
+      const progressUrl = window.location.origin;
+      const result = await api("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ progressUrl: progressUrl })
+      });
       if (!result.started) {
         setStatus(result.message || "Could not start.", "error");
         return;

@@ -19,6 +19,8 @@ import threading
 import time
 from pathlib import Path
 
+from urllib.request import Request, urlopen
+
 try:
     from benchmark.db import init_db, insert_run, insert_session, DB_PATH
 except ImportError:
@@ -52,6 +54,22 @@ DOCKERFILES = {
 }
 
 STATS_INTERVAL = 0.5  # seconds between docker stats samples
+
+
+def _post_progress(progress_url, data):
+    """POST JSON to the web UI progress endpoint (fire-and-forget)."""
+    if not progress_url:
+        return
+    try:
+        req = Request(
+            progress_url.rstrip("/") + "/api/progress",
+            data=json.dumps(data).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urlopen(req, timeout=2)
+    except Exception:
+        pass
 
 
 def ensure_dataset():
@@ -184,8 +202,10 @@ def main():
     ap.add_argument("--no-json", action="store_true", help="Do not write JSON output")
     ap.add_argument("--timeout", type=int, default=600, help="Timeout per run (seconds)")
     ap.add_argument("--lang", choices=LANGUAGES, help="Run only this language")
+    ap.add_argument("--progress-url", default=os.environ.get("PROGRESS_URL"), help="Web UI base URL for progress (e.g. http://127.0.0.1:5000)")
     args = ap.parse_args()
 
+    progress_url = args.progress_url
     os.chdir(REPO_ROOT)
     ensure_dataset()
     init_db()
@@ -195,14 +215,21 @@ def main():
     session_id = insert_session(languages)
     results = {}
 
+    _post_progress(progress_url, {"event": "suite_started", "languages": languages})
+
     for lang in languages:
         image = f"sssp-bench-{lang}"
         print(f"\n--- {lang} ---", flush=True)
+        _post_progress(progress_url, {"event": "started", "language": lang})
         wall, utilization, peak_mem, total_cpu, err = run_container_and_collect_stats(image, args.timeout)
         if err:
             print(f"  Error: {err}", flush=True)
             results[lang] = {"error": err, "wall_sec": wall}
             insert_run(session_id, lang, wall, None, None, err, utilization or [])
+            _post_progress(progress_url, {
+                "event": "completed", "language": lang,
+                "wall_sec": wall, "peak_mem_mb": None, "total_cpu_sec": None, "error": err,
+            })
         else:
             results[lang] = {
                 "wall_sec": round(wall, 3),
@@ -212,6 +239,12 @@ def main():
             }
             insert_run(session_id, lang, wall, peak_mem, total_cpu, None, utilization or [])
             print(f"  wall_sec={results[lang]['wall_sec']} peak_mem_mb={results[lang]['peak_mem_mb']} total_cpu_sec={results[lang]['total_cpu_sec']}", flush=True)
+            _post_progress(progress_url, {
+                "event": "completed", "language": lang,
+                "wall_sec": wall, "peak_mem_mb": peak_mem, "total_cpu_sec": total_cpu, "error": None,
+            })
+
+    _post_progress(progress_url, {"event": "suite_finished", "session_id": session_id})
 
     if not args.no_json:
         out_path = REPO_ROOT / args.output
