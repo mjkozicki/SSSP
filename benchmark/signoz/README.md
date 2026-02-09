@@ -40,17 +40,14 @@ See [SigNoz Docker docs](https://signoz.io/docs/install/docker/) for details.
 ## Using SigNoz with SSSP benchmarks
 
 1. **Run SigNoz** (as above) and leave the UI open at http://localhost:8080.
-2. **Run the benchmark harness** as usual from the repo root:
+2. **Run the benchmark harness** with OTEL env set so instrumented languages send traces (from repo root):
    ```bash
+   export OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
+   export OTEL_SERVICE_NAME=sssp-bench
    python benchmark/run_benchmarks.py --output benchmark/results.json
    ```
-3. **Optional instrumentation**: To send traces or metrics from the harness or from individual language runners into SigNoz, add OpenTelemetry instrumentation and point the OTLP exporter to `http://localhost:4317` (gRPC) or `http://localhost:4318` (HTTP). SigNoz’s collector will receive the data and you can query it in the UI.
-
-SigNoz is useful for:
-
-- Viewing traces and service maps if you instrument the benchmark or runners with OpenTelemetry.
-- Correlating runs with logs/metrics once you add exporters.
-- Learning the UI and data model before instrumenting.
+   The harness passes all `OTEL_*` env vars into each container. Instrumented: Python, TypeScript, Go, C#, Java. Each emits one span `sssp.benchmark` with attributes `sssp.algorithm` and `sssp.iterations`. In SigNoz, open **Traces** and filter by service name.
+3. **Optional**: Add instrumentation for PHP/Rust/C++ or use agents (e.g. Java agent).
 
 ## Links
 

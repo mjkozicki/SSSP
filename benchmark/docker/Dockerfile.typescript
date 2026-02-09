@@ -1,5 +1,5 @@
 # Benchmark image: build TS and run benchmark script
-# Build from repo root: docker build -f benchmark/docker/Dockerfile.typescript .
+# Optional: set OTEL_EXPORTER_OTLP_ENDPOINT to send traces to SigNoz.
 
 FROM node:22-alpine AS build
 WORKDIR /src
@@ -10,8 +10,8 @@ RUN npm ci 2>/dev/null || npm install && npm run build
 FROM node:22-alpine
 WORKDIR /app
 COPY --from=build /src/typescript/dist /app/dist
-COPY --from=build /src/typescript/package.json /app/
+COPY --from=build /src/typescript/package.json /app/package.json
+RUN npm install --omit=dev
 COPY benchmark/runners/run_ts.mjs /app/run_ts.mjs
 ENV GRAPH_FILE=/data/graph.txt
-# run_ts.mjs requires ../../typescript/dist -> we copy dist to /app/dist so require('./dist') works
 ENTRYPOINT ["node", "/app/run_ts.mjs"]

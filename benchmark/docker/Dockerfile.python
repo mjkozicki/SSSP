@@ -1,10 +1,13 @@
 # Benchmark image: Python runner + sssp lib
 # Build from repo root: docker build -f benchmark/docker/Dockerfile.python .
+# Optional: set OTEL_EXPORTER_OTLP_ENDPOINT (e.g. http://host.docker.internal:4318) to send traces to SigNoz.
 
 FROM python:3.12-slim
 WORKDIR /app
 COPY python/ python/
 COPY benchmark/runners/run_python.py /app/run_python.py
+COPY benchmark/runners/requirements.txt /app/runner-requirements.txt
+RUN pip install --no-cache-dir -r /app/runner-requirements.txt
 ENV PYTHONPATH=/app/python
 ENV GRAPH_FILE=/data/graph.txt
 ENTRYPOINT ["python", "/app/run_python.py"]

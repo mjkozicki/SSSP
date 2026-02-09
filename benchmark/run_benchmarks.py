@@ -176,6 +176,10 @@ def run_container_and_collect_stats(
         image,
         "/data/graph.txt",
     ]
+    # Pass OTEL_* env into container so instrumentation can send traces to SigNoz (e.g. OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318)
+    for key, val in os.environ.items():
+        if key.startswith("OTEL_") and val:
+            cmd = cmd[:-2] + ["-e", f"{key}={val}"] + cmd[-2:]
     if iterations is not None and iterations > 0:
         cmd = cmd[:-2] + ["-e", f"SSSP_ITERATIONS={iterations}"] + cmd[-2:]
     elif min_seconds > 0:

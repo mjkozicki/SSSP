@@ -1,3 +1,7 @@
+using System.Diagnostics;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using SSSP;
 
 string path = Environment.GetEnvironmentVariable("GRAPH_FILE") ?? (args.Length > 0 ? args[0] : "") ?? "";
@@ -14,30 +18,52 @@ var minSecRaw = Environment.GetEnvironmentVariable("SSSP_MIN_SECONDS");
 double minSec = double.TryParse(minSecRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var ms) ? ms : 0;
 var maxSecRaw = Environment.GetEnvironmentVariable("SSSP_MAX_SECONDS");
 double maxSec = double.TryParse(maxSecRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var mx) ? mx : 30;
-SSSPResult r;
+
+using var tracerProvider = (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")))
+    ? Sdk.CreateTracerProviderBuilder()
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "sssp-bench-csharp"))
+        .AddSource("sssp-bench-csharp")
+        .AddOtlpExporter()
+        .Build()
+    : null;
+
+var activitySource = new ActivitySource("sssp-bench-csharp", "1.0.0");
 int iterations = 1;
-if (fixedIters > 0)
+SSSPResult r;
+
+void RunBenchmark()
 {
-    r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
-    for (int i = 1; i < fixedIters; i++)
-        r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
-    iterations = fixedIters;
-}
-else if (minSec > 0)
-{
-    var sw = System.Diagnostics.Stopwatch.StartNew();
-    r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
-    iterations = 1;
-    while (sw.Elapsed.TotalSeconds < minSec && sw.Elapsed.TotalSeconds < maxSec)
+    if (fixedIters > 0)
     {
         r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
-        iterations++;
+        for (int i = 1; i < fixedIters; i++)
+            r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+        iterations = fixedIters;
+    }
+    else if (minSec > 0)
+    {
+        var sw = Stopwatch.StartNew();
+        r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+        iterations = 1;
+        while (sw.Elapsed.TotalSeconds < minSec && sw.Elapsed.TotalSeconds < maxSec)
+        {
+            r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+            iterations++;
+        }
+    }
+    else
+    {
+        r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
     }
 }
-else
+
+using (var activity = activitySource.StartActivity("sssp.benchmark"))
 {
-    r = algo == "dijkstra" ? Dijkstra.Solve(g, 0) : DuanMaoShuYinSSSP.Solve(g, 0);
+    activity?.SetTag("sssp.algorithm", algo);
+    RunBenchmark();
+    activity?.SetTag("sssp.iterations", iterations);
 }
+
 var resultFile = Environment.GetEnvironmentVariable("RESULT_FILE");
 if (!string.IsNullOrEmpty(resultFile))
     File.WriteAllText(resultFile, $"{{\"iterations\":{iterations}}}");

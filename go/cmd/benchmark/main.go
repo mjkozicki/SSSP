@@ -1,8 +1,10 @@
 // Benchmark runner: read graph from GRAPH_FILE or argv[1], run SSSP(0), print DONE.
+// When OTEL_EXPORTER_OTLP_ENDPOINT is set, emits a trace span for the run (e.g. SigNoz).
 package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,7 +13,34 @@ import (
 	"time"
 
 	"sssp"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
+
+func initTracer(ctx context.Context) (func(context.Context), error) {
+	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") == "" {
+		return nil, nil
+	}
+	exporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	svcName := os.Getenv("OTEL_SERVICE_NAME")
+	if svcName == "" {
+		svcName = "sssp-bench-go"
+	}
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceNameKey.String(svcName))),
+	)
+	otel.SetTracerProvider(tp)
+	return func(c context.Context) { _ = tp.Shutdown(c) }, nil
+}
 
 func loadGraph(path string) (*sssp.Graph, error) {
 	f, err := os.Open(path)
@@ -72,39 +101,61 @@ func main() {
 			maxSec = f
 		}
 	}
+	ctx := context.Background()
+	shutdown, err := initTracer(ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "otel init:", err)
+	}
+	if shutdown != nil {
+		defer shutdown(ctx)
+	}
+
+	runBench := func() {
+		if fixedIters > 0 {
+			if algo == "dijkstra" {
+				r = sssp.Dijkstra(g, 0)
+			} else {
+				r = sssp.DuanMaoShuYin(g, 0)
+			}
+			for i := 1; i < fixedIters; i++ {
+				if algo == "dijkstra" {
+					r = sssp.Dijkstra(g, 0)
+				} else {
+					r = sssp.DuanMaoShuYin(g, 0)
+				}
+			}
+			iterations = fixedIters
+		} else if minSec > 0 {
+			start := time.Now()
+			iterations = 0
+			for time.Since(start).Seconds() < minSec && time.Since(start).Seconds() < maxSec {
+				if algo == "dijkstra" {
+					r = sssp.Dijkstra(g, 0)
+				} else {
+					r = sssp.DuanMaoShuYin(g, 0)
+				}
+				iterations++
+			}
+		} else {
+			if algo == "dijkstra" {
+				r = sssp.Dijkstra(g, 0)
+			} else {
+				r = sssp.DuanMaoShuYin(g, 0)
+			}
+		}
+	}
+
 	var r *sssp.SsspResult
 	iterations := 1
-	if fixedIters > 0 {
-		if algo == "dijkstra" {
-			r = sssp.Dijkstra(g, 0)
-		} else {
-			r = sssp.DuanMaoShuYin(g, 0)
-		}
-		for i := 1; i < fixedIters; i++ {
-			if algo == "dijkstra" {
-				r = sssp.Dijkstra(g, 0)
-			} else {
-				r = sssp.DuanMaoShuYin(g, 0)
-			}
-		}
-		iterations = fixedIters
-	} else if minSec > 0 {
-		start := time.Now()
-		iterations = 0
-		for time.Since(start).Seconds() < minSec && time.Since(start).Seconds() < maxSec {
-			if algo == "dijkstra" {
-				r = sssp.Dijkstra(g, 0)
-			} else {
-				r = sssp.DuanMaoShuYin(g, 0)
-			}
-			iterations++
-		}
+	tracer := otel.Tracer("sssp-bench-go")
+	if shutdown != nil {
+		ctx, span := tracer.Start(ctx, "sssp.benchmark")
+		defer span.End()
+		span.SetAttributes(attribute.String("sssp.algorithm", algo))
+		runBench()
+		span.SetAttributes(attribute.Int("sssp.iterations", iterations))
 	} else {
-		if algo == "dijkstra" {
-			r = sssp.Dijkstra(g, 0)
-		} else {
-			r = sssp.DuanMaoShuYin(g, 0)
-		}
+		runBench()
 	}
 	_ = r
 	if resultFile := os.Getenv("RESULT_FILE"); resultFile != "" {

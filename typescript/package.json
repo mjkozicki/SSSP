@@ -8,6 +8,13 @@
     "build": "tsc",
     "test": "node --test test/sssp.test.js"
   },
+  "optionalDependencies": {
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.0",
+    "@opentelemetry/resources": "^1.22.0",
+    "@opentelemetry/sdk-trace-base": "^1.22.0",
+    "@opentelemetry/sdk-trace-node": "^1.22.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }
